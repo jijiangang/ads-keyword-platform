@@ -1549,6 +1549,7 @@ ACOS: ${report60.acos.toFixed(1)}%
           suggestions: engineResult.suggestions,
           details: engineResult.analysis,
           analysis_30d: d30,
+          analysis_60d: d60,
           current_bid: kw.current_bid || 0
         };
       }
