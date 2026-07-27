@@ -1450,8 +1450,10 @@ function closeAiModal(e) {
 
 /** 批量AI分析所有选中的关键词 */
 async function batchAIAnalyze() {
+  console.log('batchAIAnalyze: selectedIds.size=', selectedIds.size, 'keywords.length=', keywords.length, 'selectedIds=', [...selectedIds]);
   if (selectedIds.size === 0) { toast('请先选择关键词'); return; }
   const selected = keywords.filter(k => selectedIds.has(String(k.keyword_id)));
+  console.log('batchAIAnalyze: matched=', selected.length);
   if (selected.length === 0) { toast('选中的关键词已不在当前列表'); return; }
 
   const modal = document.getElementById('aiModal');
