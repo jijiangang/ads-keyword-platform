@@ -281,15 +281,9 @@ async function handleAPI(req, res, parts) {
       // 隐藏敏感字段（只隐藏系统内部密钥，应用凭据向前端返回占位）
       const SENSITIVE_KEYS = ['auth_secret'];
       SENSITIVE_KEYS.forEach(k => delete configObj[k]);
-      // App Secret / API Key 向页面返回掩码（只显示后4位）
-      function maskField(val) {
-        if (!val || val.length < 8) return val ? val.slice(0,2) + '****' : '';
-        return val.slice(0,2) + '****' + val.slice(-4);
-      }
-      if (configObj.lingxing_app_secret) configObj.lingxing_app_secret = maskField(configObj.lingxing_app_secret);
-      if (configObj.ai_llm_api_key) configObj.ai_llm_api_key = maskField(configObj.ai_llm_api_key);
-      if (configObj.sellersprite_secret) configObj.sellersprite_secret = maskField(configObj.sellersprite_secret);
-      if (configObj.wecom_webhook_url) configObj.wecom_webhook_url = maskField(configObj.wecom_webhook_url);
+      // App Secret / API Key 向页面返回占位（实际已保存）
+      if (configObj.lingxing_app_secret) configObj.lingxing_app_secret = '********';
+      if (configObj.ai_llm_api_key) configObj.ai_llm_api_key = '********';
       if (configObj.admin_password) configObj.admin_password = '********';
       return sendJSON(res, { settings: configObj });
     }
