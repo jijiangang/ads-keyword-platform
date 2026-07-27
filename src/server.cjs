@@ -1430,22 +1430,28 @@ ACOS: ${report90.acos.toFixed(1)}%
 
       async function fetchReportsByMonth(days) {
         const dates = dateRange(days);
-        const rows = await Promise.all(dates.map(async ds => {
-          try {
-            let r;
-            if (campaignType === 'sb') {
-              r = await callLingXingApi('/pb/openapi/newad/hsaQueryWordReports', 'POST', {
-                sid, profile_id: campaignProfileId, target_type: 'keyword',
-                offset: 0, length: 5000, report_date: ds
-              });
-            } else {
-              r = await callLingXingApi('/pb/openapi/newad/spKeywordReports', 'POST',
-                { sid, offset: 0, length: 5000, report_date: ds });
-            }
-            return r.data || [];
-          } catch(e) { return []; }
-        }));
-        return rows.flat();
+        const CONCURRENCY = 5;
+        const rows = [];
+        for (let i = 0; i < dates.length; i += CONCURRENCY) {
+          const chunk = dates.slice(i, i + CONCURRENCY);
+          const chunkRows = await Promise.all(chunk.map(async ds => {
+            try {
+              let r;
+              if (campaignType === 'sb') {
+                r = await callLingXingApi('/pb/openapi/newad/hsaQueryWordReports', 'POST', {
+                  sid, profile_id: campaignProfileId, target_type: 'keyword',
+                  offset: 0, length: 5000, report_date: ds
+                });
+              } else {
+                r = await callLingXingApi('/pb/openapi/newad/spKeywordReports', 'POST',
+                  { sid, offset: 0, length: 5000, report_date: ds });
+              }
+              return r.data || [];
+            } catch(e) { return []; }
+          }));
+          rows.push(...chunkRows.flat());
+        }
+        return rows;
       }
 
       const [allRows30, allRows60, allRows90] = await Promise.all([
