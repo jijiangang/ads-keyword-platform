@@ -1884,15 +1884,17 @@ function showAddUserModal() {
 }
 
 function editUser(id, username, nickName, role) {
+  console.log('[editUser] id:', id, 'username:', username);
   currentEditUserId = id;
-  document.getElementById('userModalTitle').textContent = '编辑用户: ' + username;
-  document.getElementById('um_username').value = username;
+  document.getElementById('userModalTitle').textContent = '编辑用户: ' + (username || '');
+  document.getElementById('um_username').value = username || '';
   document.getElementById('um_username').disabled = true;
   document.getElementById('um_password').value = '';
   document.getElementById('um_password').placeholder = '留空不修改密码';
-  document.getElementById('um_nick_name').value = nickName;
-  document.getElementById('um_role').value = role;
+  document.getElementById('um_nick_name').value = nickName || '';
+  document.getElementById('um_role').value = role || 'user';
   document.getElementById('userModal').classList.add('active');
+  document.getElementById('userModal').style.display = '';
 }
 
 function closeUserModal() {
