@@ -996,7 +996,7 @@ async function handleAPI(req, res, parts) {
         } catch (e) {}
 
         // 拉取近30天广告报告
-        let report30 = { impressions: 0, clicks: 0, cost: 0, sales: 0 };
+        let report30 = { impressions: 0, clicks: 0, cost: 0, sales: 0, ctr: 0, cpc: 0, acos: 0 };
         try {
           const now = new Date();
           const start30 = new Date(now); start30.setDate(start30.getDate() - 30);
@@ -1012,6 +1012,14 @@ async function handleAPI(req, res, parts) {
               report30.cost += row.cost || 0;
               report30.sales += row.sales || 0;
             }
+          }
+          // 计算派生字段
+          if (report30.clicks > 0) {
+            report30.ctr = (report30.clicks / Math.max(report30.impressions, 1)) * 100;
+            report30.cpc = report30.cost / report30.clicks;
+          }
+          if (report30.sales > 0) {
+            report30.acos = (report30.cost / report30.sales) * 100;
           }
         } catch (e) {}
 
