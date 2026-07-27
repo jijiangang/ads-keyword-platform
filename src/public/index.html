@@ -1869,6 +1869,7 @@ async function loadUsers() {
 }
 
 function showAddUserModal() {
+  console.log('[showAddUserModal] called');
   currentEditUserId = null;
   document.getElementById('userModalTitle').textContent = '添加用户';
   document.getElementById('um_username').value = '';
@@ -1878,6 +1879,8 @@ function showAddUserModal() {
   document.getElementById('um_nick_name').value = '';
   document.getElementById('um_role').value = 'user';
   document.getElementById('userModal').classList.add('active');
+  document.getElementById('userModal').style.display = '';
+  console.log('[showAddUserModal] modal active class added');
 }
 
 function editUser(id, username, nickName, role) {
@@ -1897,6 +1900,7 @@ function closeUserModal() {
   if (el) {
     el.classList.remove('active');
     el.style.display = 'none';
+    console.log('[closeUserModal] closed');
   }
 }
 
