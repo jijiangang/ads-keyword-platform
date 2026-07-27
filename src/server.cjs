@@ -176,6 +176,28 @@ function generateSign(params, appKey) {
   return encrypted.toString();
 }
 
+// ========== 修改记录 ==========
+const HISTORY_PATH = path.join(__dirname, 'modify_history.json');
+
+function loadChangeMap() {
+  try {
+    if (fs.existsSync(HISTORY_PATH)) {
+      const raw = fs.readFileSync(HISTORY_PATH, 'utf8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) {
+        const map = {};
+        for (const entry of data) {
+          if (!map[entry.id]) map[entry.id] = entry;
+        }
+        fs.writeFileSync(HISTORY_PATH, JSON.stringify(map, null, 2), 'utf8');
+        return map;
+      }
+      return data;
+    }
+  } catch(e) { console.error('读取修改记录失败:', e.message); }
+  return {};
+}
+
 async function callLingXingApi(path, method, bizParams = {}) {
   const token = await getLingXingToken();
   const appKey = getConfig('lingxing_app_id', '');
