@@ -395,8 +395,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </div>
 
 <!-- 用户编辑/新增模态框 -->
-<div class="modal-overlay" id="userModal">
-  <div class="modal-box">
+<div class="modal-overlay" id="userModal" onclick="if(event.target===this)closeUserModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <h3 id="userModalTitle">添加用户</h3>
     <label>用户名</label>
     <input type="text" id="um_username" placeholder="英文或数字">
@@ -1719,6 +1719,11 @@ function handleLogout() {
   renderTable();
   showLogin();
 }
+
+// ESC 关闭弹窗
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeUserModal(); closeAiModal(); }
+});
 
 // 回车键触发登录
 document.addEventListener('keydown', e => {
