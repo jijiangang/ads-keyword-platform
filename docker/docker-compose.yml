@@ -1,9 +1,12 @@
+name: ads-keyword-platform
+
 services:
-  ads-keyword:
+  ads-keyword-platform:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: ads-keyword
+    image: ads-keyword-platform:latest
+    container_name: ads-keyword-platform
     restart: unless-stopped
     ports:
       - "18444:18444"
@@ -15,14 +18,20 @@ services:
       - DB_PATH=/app/data/ads.db
       - TZ=Asia/Shanghai
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:18444/api/auth/verify"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:18444/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 15s
+    networks:
+      - ads-keyword-net
 
 volumes:
   ads-keyword-data:
-    name: ads-keyword-data
+    name: ads-keyword-platform-data
   ads-keyword-cache:
-    name: ads-keyword-cache
+    name: ads-keyword-platform-cache
+
+networks:
+  ads-keyword-net:
+    driver: bridge
