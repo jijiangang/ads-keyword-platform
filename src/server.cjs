@@ -636,6 +636,7 @@ async function handleAPI(req, res, parts) {
 
     // === 关键词数据 ===
     if (parts[0] === 'keywords' && method === 'GET' && parts.length === 1) {
+      try {
       if (!query.sid || !query.campaign_id) return sendError(res, '缺少 sid 或 campaign_id');
       const sid = Number(query.sid);
       const campaignId = Number(query.campaign_id);
@@ -937,6 +938,10 @@ async function handleAPI(req, res, parts) {
 
     // 最多返回 200 个关键词
     return sendJSON(res, { keywords: keywords.slice(0, 200), campaign: campaignData });
+    } catch (e) {
+      console.error('Keywords route error:', e.message, e.stack);
+      return sendJSON(res, { error: '关键词查询异常: ' + (e.message || e) }, 500);
+    }
     }
 
     // === 卖家精灵关键词市场数据 ===
