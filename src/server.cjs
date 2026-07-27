@@ -46,6 +46,7 @@ let LINGXING_APP_ID = '';
 let LINGXING_APP_SECRET = '';
 const SELLERSPRITE_URL = process.env.SELLERSPRITE_URL || 'https://mcp.sellersprite.com/mcp';
 let SELLERSPRITE_SECRET = '99da44546fed4fb2926660dc28e25810';
+const SS_CACHE_PATH = path.join(__dirname, 'ss_cache.json');
 let WECOM_WEBHOOK_URL = '';
 let DINGTALK_WEBHOOK_URL = '';
 let DINGTALK_SECRET = '';
@@ -1132,14 +1133,45 @@ ACOS: ${report90.acos.toFixed(1)}%
       }
     }
 
-    // === 卖家精灵关键词市场数据 ===
+    // === 卖家精灵关键词市场数据（带本地缓存） ===
     if (parts[0] === 'sellersprite' && parts[1] === 'keyword' && method === 'GET') {
       if (!query.keyword) return sendError(res, '缺少 keyword 参数');
       try {
+        const key = query.keyword.toLowerCase();
+        const CACHE_TTL = 24 * 60 * 60 * 1000;
+        let ssCache = {};
+        try { ssCache = JSON.parse(fs.readFileSync(SS_CACHE_PATH, 'utf8')); } catch(e) { ssCache = {}; }
+        
+        // 命中缓存直接返回
+        const cached = ssCache[key];
+        if (cached && cached._ts && (Date.now() - cached._ts) <= CACHE_TTL) {
+          return sendJSON(res, { data: cached, from_cache: true });
+        }
+        
         const result = await callSellerspriteTool('keyword_research_trends', {
           keyword: query.keyword,
           marketplace: query.marketplace || 'US'
         });
+        
+        // 解析并缓存
+        try {
+          const text = result?.result?.content?.[0]?.text || '{}';
+          if (!text.includes('ERROR_UNAUTHORIZED')) {
+            const items = JSON.parse(text)?.data || [];
+            if (items.length > 0) {
+              const latest = items[items.length - 1];
+              const entry = {
+                search_vol: latest.search || 0,
+                purchase_rate: latest.purchaseRate || 0,
+                growth: latest.yearlyGrowth || 0,
+                _ts: Date.now()
+              };
+              ssCache[key] = entry;
+              try { fs.writeFileSync(SS_CACHE_PATH, JSON.stringify(ssCache, null, 2)); } catch(e) {}
+            }
+          }
+        } catch(e) {}
+        
         return sendJSON(res, result.result || result);
       } catch (e) {
         return sendJSON(res, { error: e.message }, 500);
