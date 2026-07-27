@@ -9,7 +9,7 @@ services:
     container_name: ads-keyword-platform
     restart: unless-stopped
     ports:
-      - "18444:18444"
+      - "18445:18444"
     volumes:
       - ads-keyword-data:/app/data
       - ads-keyword-cache:/app/cache

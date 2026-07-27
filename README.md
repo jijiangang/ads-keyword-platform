@@ -7,7 +7,7 @@
 ### 前置条件
 
 - Docker & Docker Compose v2+
-- 目标服务器已开放端口 18444
+- 目标服务器已开放端口 18445
 
 ### 部署步骤
 
@@ -20,7 +20,7 @@ cd ads-keyword-platform
 docker compose -f docker/docker-compose.yml up -d --build
 
 # 3. 验证
-curl http://localhost:18444/api/health
+curl http://localhost:18445/api/health
 ```
 
 ### 苹果 Docker (macOS) 建议方式
@@ -44,7 +44,7 @@ docker compose -f docker/docker-compose.yml up -d --build
 
 ### 首次配置
 
-1. 访问 `http://localhost:18444`
+1. 访问 `http://localhost:18445`
 2. 默认登录：**`admin` / `admin888`**（登录后建议修改密码）
 3. 点击右侧 **⚙️ 设置**，依次配置：
    - **领星ERP** App ID / App Secret
@@ -81,7 +81,7 @@ docker image prune -f
 
 ```
 ┌─ 浏览器 ──────────────────┐
-│  http://host:18444          │
+│  http://host:18445          │
 └──────────┬────────────────┘
            │
 ┌──────────▼──────────────────┐
