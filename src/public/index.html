@@ -1814,13 +1814,12 @@ async function saveSettings() {
     });
     const data = await res.json();
     if (data.success) {
-      document.getElementById('saveSettingsResult').textContent = '✅ 已保存';
-      setTimeout(() => document.getElementById('saveSettingsResult').textContent = '', 3000);
+      alert('保存成功！data=' + JSON.stringify(data));
     } else {
-      showToast('保存失败: ' + (data.error || '未知错误'), 'error');
+      alert('保存失败: ' + (data.error || '未知错误'));
     }
   } catch(e) {
-    showToast('保存失败: ' + e.message, 'error');
+    alert('请求异常: ' + e.message);
   }
 }
 
