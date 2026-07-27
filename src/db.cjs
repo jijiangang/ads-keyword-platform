@@ -7,7 +7,7 @@ const fs = require('fs');
 const initSqlJs = require('sql.js');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const DB_PATH = path.join(DATA_DIR, 'ads-platform.db');
+const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'ads-platform.db');
 
 let db = null;
 let SQL = null;
