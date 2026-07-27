@@ -1865,7 +1865,7 @@ async function loadUsers() {
         </td>
       </tr>`
     ).join('');
-  } catch(e) {}
+  } catch(e) { console.error('[loadUsers] error:', e); }
 }
 
 function showAddUserModal() {
