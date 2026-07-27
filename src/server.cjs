@@ -395,8 +395,13 @@ async function handleAPI(req, res, parts) {
 
     // === 店铺列表 ===
     if (parts[0] === 'stores' && method === 'GET') {
-      const result = await callLingXingApi('/erp/sc/data/seller/lists', 'GET');
-      return sendJSON(res, { stores: result.data || [] });
+      try {
+        const result = await callLingXingApi('/erp/sc/data/seller/lists', 'GET');
+        return sendJSON(res, { stores: result.data || [] });
+      } catch(e) {
+        console.error('[stores] 领星API错误:', e.message);
+        return sendJSON(res, { error: '领星API: ' + e.message }, 500);
+      }
     }
 
     // === 调试：sbTargeting 原始数据 ===
