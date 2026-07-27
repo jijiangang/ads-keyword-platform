@@ -1322,73 +1322,77 @@ ACOS: ${report90.acos.toFixed(1)}%
       const { sid, profile_id, keywords: kwActions, target_type } = body;
       if (!kwActions || !Array.isArray(kwActions)) return sendError(res, '缺少 keywords 数组');
 
-      const isAsin = target_type === 'asin';
-      let result;
+      try {
+        const isAsin = target_type === 'asin';
+        let result;
 
-      if (isAsin) {
-        // SP 商品投放操作：managePutSpTarget
-        const params = {};
-        if (sid) params.sid = Number(sid);
-        if (profile_id) params.profile_id = Number(profile_id);
-        params.targetingClauses = kwActions.map(k => {
-          const item = { targetId: Number(k.keywordId) };
-          if (k.state) item.state = k.state;
-          if (k.bid !== undefined) {
-            item.bid = Number(k.bid);
-            item.isBaseValue = 1;
-            item.baseType = 1;
-            item.baseValue = Number(k.bid);
-          } else {
-            item.isBaseValue = 0;
-          }
-          return item;
-        });
-        result = await callLingXingApi('/basicOpen/adReport/manage/putSpTarget', 'POST', params);
-      } else {
-        // SP 关键词操作：managePutSpKeyword
-        const params = {};
-        if (sid) params.sid = Number(sid);
-        if (profile_id) params.profile_id = Number(profile_id);
-        params.keywords = kwActions.map(k => {
-          const item = {};
-          item.keywordId = Number(k.keywordId);
-          if (k.state) item.state = k.state;
-          if (k.bid !== undefined) {
-            item.bid = Number(k.bid);
-            item.isBaseValue = 1;
-            item.baseType = 1;
-            item.baseValue = Number(k.bid);
-          } else {
-            item.isBaseValue = 0;
-          }
-          return item;
-        });
-        result = await callLingXingApi('/basicOpen/adReport/manage/putSpKeyword', 'POST', params);
-      }
-
-      // 记录修改历史
-      const timestamp = new Date().toISOString();
-      const prefix = isAsin ? 'target_' : 'keyword_';
-      for (const action of kwActions) {
-        const changes = {};
-        if (action.state) {
-          changes.state = { to: action.state };
+        if (isAsin) {
+          // SP 商品投放操作：managePutSpTarget
+          const params = {};
+          if (sid) params.sid = Number(sid);
+          if (profile_id) params.profile_id = Number(profile_id);
+          params.targetingClauses = kwActions.map(k => {
+            const item = { targetId: Number(k.keywordId) };
+            if (k.state) item.state = k.state;
+            if (k.bid !== undefined) {
+              item.bid = Number(k.bid);
+              item.isBaseValue = 1;
+              item.baseType = 1;
+              item.baseValue = Number(k.bid);
+            } else {
+              item.isBaseValue = 0;
+            }
+            return item;
+          });
+          result = await callLingXingApi('/basicOpen/adReport/manage/putSpTarget', 'POST', params);
+        } else {
+          // SP 关键词操作：managePutSpKeyword
+          const params = {};
+          if (sid) params.sid = Number(sid);
+          if (profile_id) params.profile_id = Number(profile_id);
+          params.keywords = kwActions.map(k => {
+            const item = {};
+            item.keywordId = Number(k.keywordId);
+            if (k.state) item.state = k.state;
+            if (k.bid !== undefined) {
+              item.bid = Number(k.bid);
+              item.isBaseValue = 1;
+              item.baseType = 1;
+              item.baseValue = Number(k.bid);
+            } else {
+              item.isBaseValue = 0;
+            }
+            return item;
+          });
+          result = await callLingXingApi('/basicOpen/adReport/manage/putSpKeyword', 'POST', params);
         }
-        if (action.bid !== undefined) {
-          const fromBid = action.current_bid !== undefined ? Number(action.current_bid) : undefined;
-          changes.bid = { from: fromBid, to: Number(action.bid) };
-        }
-        const entry = {
-          id: prefix + action.keywordId,
-          keyword_text: action.keyword_text || '',
-          target_type: target_type || 'keyword',
-          timestamp,
-          changes
-        };
-        saveChange(entry.id, entry);
-      }
 
-      return sendJSON(res, { success: true, data: result.data });
+        // 记录修改历史
+        const timestamp = new Date().toISOString();
+        const prefix = isAsin ? 'target_' : 'keyword_';
+        for (const action of kwActions) {
+          const changes = {};
+          if (action.state) {
+            changes.state = { to: action.state };
+          }
+          if (action.bid !== undefined) {
+            const fromBid = action.current_bid !== undefined ? Number(action.current_bid) : undefined;
+            changes.bid = { from: fromBid, to: Number(action.bid) };
+          }
+          const entry = {
+            id: prefix + action.keywordId,
+            keyword_text: action.keyword_text || '',
+            target_type: target_type || 'keyword',
+            timestamp,
+            changes
+          };
+          saveChange(entry.id, entry);
+        }
+
+        return sendJSON(res, { success: true, data: result.data });
+      } catch (e) {
+        return sendJSON(res, { success: false, error: e.message }, 500);
+      }
     }
 
     // === 批量关键词AI分析 ===
