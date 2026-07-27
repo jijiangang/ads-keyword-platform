@@ -199,6 +199,12 @@ function loadChangeMap() {
   return {};
 }
 
+function saveChange(key, value) {
+  const map = loadChangeMap();
+  map[key] = value;
+  fs.writeFileSync(HISTORY_PATH, JSON.stringify(map, null, 2), 'utf8');
+}
+
 async function callLingXingApi(path, method, bizParams = {}) {
   const token = await getLingXingToken();
   const appKey = getConfig('lingxing_app_id', '');
