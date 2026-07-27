@@ -9,16 +9,16 @@ services:
     container_name: ads-keyword-platform
     restart: unless-stopped
     ports:
-      - "18445:18444"
+      - "18445:18445"
     volumes:
       - ads-keyword-data:/app/data
       - ads-keyword-cache:/app/cache
     environment:
-      - PORT=18444
+      - PORT=18445
       - DB_PATH=/app/data/ads.db
       - TZ=Asia/Shanghai
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:18444/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:18445/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
