@@ -1905,6 +1905,14 @@ function editUser(id, username, nickName, role) {
   el.style.display = 'flex';
 }
 
+function showToast(msg, type) {
+  const el = document.getElementById('saveSettingsResult');
+  if (el) {
+    el.textContent = msg.startsWith('&#') ? msg : (type === 'error' ? '❌ ' : '✅ ') + msg.replace(/&#[^;]+;/g, '');
+    setTimeout(() => el.textContent = '', 3000);
+  }
+}
+
 function closeUserModal() {
   const el = document.getElementById('userModal');
   if (el) {
