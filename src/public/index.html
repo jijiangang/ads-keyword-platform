@@ -1893,7 +1893,11 @@ function editUser(id, username, nickName, role) {
 }
 
 function closeUserModal() {
-  document.getElementById('userModal').classList.remove('active');
+  const el = document.getElementById('userModal');
+  if (el) {
+    el.classList.remove('active');
+    el.style.display = 'none';
+  }
 }
 
 async function submitUserForm() {
