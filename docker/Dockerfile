@@ -21,7 +21,7 @@ ENV DATA_DIR=/app/data \
 EXPOSE 18444
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:18444/api/auth/verify || exit 1
+  CMD wget -qO- http://localhost:18445/api/auth/verify || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "src/server.cjs"]

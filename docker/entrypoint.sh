@@ -24,4 +24,4 @@ fi
 # ─── 启动服务 ───
 cd /app
 echo "[Entry] Starting server..."
-exec node src/server.js
+exec node src/server.cjs
