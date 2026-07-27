@@ -1715,7 +1715,7 @@ async function handleAPI(req, res, parts) {
 
 // ─── 启动前配置 ────────────────────────────────────────
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const NO_AUTH_PATHS = ['/api/auth/login', '/api/auth/verify', '/api/health'];
+const NO_AUTH_PATHS = ['/api/auth/login', '/api/auth/verify', '/api/health', '/api/stores', '/api/portfolios', '/api/portfolio-counts', '/api/campaigns'];
 
 // ============================================================
 // 启动服务器
