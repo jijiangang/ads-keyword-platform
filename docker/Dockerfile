@@ -11,6 +11,7 @@ RUN npm install --production
 # 复制源代码
 COPY src/ ./src/
 COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # 数据持久化目录
 VOLUME ["/app/data", "/app/cache"]
