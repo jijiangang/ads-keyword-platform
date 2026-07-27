@@ -571,8 +571,9 @@ function api(url, opts = {}, timeoutMs = 60000) {
 // 批量选择 / 操作
 // ================================================================
 function onRowCheck(el, kwId) {
-  if (el.checked) selectedIds.add(kwId);
-  else selectedIds.delete(kwId);
+  const id = String(kwId);
+  if (el.checked) selectedIds.add(id);
+  else selectedIds.delete(id);
   // 更新全选框
   document.getElementById('selectAll').checked = selectedIds.size === keywords.length;
   updateBatchBar();
@@ -580,8 +581,9 @@ function onRowCheck(el, kwId) {
 
 function toggleSelectAll(checked) {
   for (const kw of keywords) {
-    if (checked) selectedIds.add(kw.keyword_id);
-    else selectedIds.delete(kw.keyword_id);
+    const id = String(kw.keyword_id);
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
   }
   // 同步所有复选框
   document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb => cb.checked = checked);
@@ -612,7 +614,7 @@ async function doBatchAction(actionType, value) {
   const sid = $store.value;
   if (!sid) { toast('缺少店铺信息'); return; }
 
-  const selected = keywords.filter(k => selectedIds.has(k.keyword_id));
+  const selected = keywords.filter(k => selectedIds.has(String(k.keyword_id)));
   if (selected.length === 0) { toast('未选择关键词'); return; }
 
   // 按 target_type 分组
@@ -1027,7 +1029,7 @@ function renderTable() {
 
     const isAsin = kw.target_type === 'asin';
     const kwDisplay = isAsin ? `<span class="badge badge-asin">ASIN</span> ${kw.keyword_text || '—'}` : (kw.keyword_text || '—');
-    const checked = selectedIds.has(kw.keyword_id) ? 'checked' : '';
+    const checked = selectedIds.has(String(kw.keyword_id)) ? 'checked' : '';
     const kwIdSafe = kw.keyword_id.toString().replace(/\D/g,'');
     // 距上次修改天数
     let lastChangeLabel = '—';
@@ -1449,7 +1451,7 @@ function closeAiModal(e) {
 /** 批量AI分析所有选中的关键词 */
 async function batchAIAnalyze() {
   if (selectedIds.size === 0) { toast('请先选择关键词'); return; }
-  const selected = keywords.filter(k => selectedIds.has(k.keyword_id));
+  const selected = keywords.filter(k => selectedIds.has(String(k.keyword_id)));
   if (selected.length === 0) { toast('选中的关键词已不在当前列表'); return; }
 
   const modal = document.getElementById('aiModal');
