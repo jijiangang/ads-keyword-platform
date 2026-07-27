@@ -44,16 +44,16 @@ let PORT = 18444;
 let MEMORY_LIMIT_MB = 500;
 let LINGXING_APP_ID = '';
 let LINGXING_APP_SECRET = '';
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
 const SELLERSPRITE_URL = process.env.SELLERSPRITE_URL || 'https://mcp.sellersprite.com/mcp';
 let SELLERSPRITE_SECRET = '99da44546fed4fb2926660dc28e25810';
 const SS_CACHE_PATH = path.join(__dirname, 'ss_cache.json');
 let WECOM_WEBHOOK_URL = '';
 let DINGTALK_WEBHOOK_URL = '';
 let DINGTALK_SECRET = '';
-
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 const CryptoJS = require('crypto-js');
 const md5 = require('md5');
