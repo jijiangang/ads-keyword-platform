@@ -395,7 +395,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </div>
 
 <!-- 用户编辑/新增模态框 -->
-<div class="modal-overlay" id="userModal" onclick="if(event.target===this)closeUserModal()">
+<div class="modal-overlay" id="userModal" style="display:none" onclick="if(event.target===this)closeUserModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
     <h3 id="userModalTitle">添加用户</h3>
     <label>用户名</label>
