@@ -278,12 +278,9 @@ async function handleAPI(req, res, parts) {
       const allConfig = getAllConfig();
       const configObj = {};
       allConfig.forEach(c => { configObj[c.key] = c.value; });
-      // 隐藏敏感字段（只隐藏系统内部密钥，应用凭据向前端返回占位）
-      const SENSITIVE_KEYS = ['auth_secret'];
+      // 敏感字段（前端不回显）
+      const SENSITIVE_KEYS = ['auth_secret', 'lingxing_app_secret', 'ai_llm_api_key'];
       SENSITIVE_KEYS.forEach(k => delete configObj[k]);
-      // App Secret / API Key 向页面返回占位（实际已保存）
-      if (configObj.lingxing_app_secret) configObj.lingxing_app_secret = '********';
-      if (configObj.ai_llm_api_key) configObj.ai_llm_api_key = '********';
       if (configObj.admin_password) configObj.admin_password = '********';
       return sendJSON(res, { settings: configObj });
     }
