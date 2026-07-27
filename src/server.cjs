@@ -1095,6 +1095,7 @@ async function handleAPI(req, res, parts) {
           ...result,
           sellersprite: ssData,
           analysis_30d: report30,
+          analysis_60d: report30,
           current_bid: current_bid || 0
         });
       } catch (e) {
