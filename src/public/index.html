@@ -1941,6 +1941,17 @@ async function deleteUser(id, username) {
   else showToast('&#10060; ' + (data.error || '删除失败'), 'error');
 }
 
+// 页面加载完成后，确保所有弹窗默认隐藏（兜底保护）
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('userModal').style.display = 'none';
+  document.getElementById('aiModal').style.display = 'none';
+  const loginOverlay = document.getElementById('loginOverlay');
+  // 无 token 才显示登录
+  if (!localStorage.getItem('auth_token')) {
+    loginOverlay.style.display = 'flex';
+  }
+});
+
 </script>
 
 <!-- ================================================================ -->
