@@ -47,6 +47,8 @@ let LINGXING_APP_SECRET = '';
 const SELLERSPRITE_URL = 'http://localhost:3000/mcp';
 let SELLERSPRITE_SECRET = '';
 let WECOM_WEBHOOK_URL = '';
+let DINGTALK_WEBHOOK_URL = '';
+let DINGTALK_SECRET = '';
 
 const http = require('http');
 const fs = require('fs');
@@ -263,6 +265,43 @@ async function sendWecomMessage(message) {
   }
 }
 
+// ============================================================
+// 钉钉 Webhook 推送
+// ============================================================
+async function sendDingtalkMessage(message) {
+  const webhookUrl = getConfig('dingtalk_webhook_url', '');
+  if (!webhookUrl) return { success: false, error: '未配置钉钉Webhook URL' };
+  
+  const logId = db.createPushLog({ type: 'dingtalk_webhook', target: webhookUrl, title: message.slice(0, 200), status: 'pending' });
+  
+  try {
+    // 构建请求 URL（可能带签名）
+    let url = webhookUrl;
+    const secret = getConfig('dingtalk_secret', '');
+    if (secret) {
+      const timestamp = Date.now();
+      const stringToSign = timestamp + '\n' + secret;
+      const hmac = crypto.createHmac('sha256', secret).update(stringToSign).digest();
+      const sign = encodeURIComponent(Buffer.from(hmac).toString('base64'));
+      url += (url.includes('?') ? '&' : '?') + 'timestamp=' + timestamp + '&sign=' + sign;
+    }
+    
+    const body = { msgtype: 'markdown', markdown: { title: '系统通知', text: message } };
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.errcode === 0) {
+      db.updatePushLog(logId, { status: 'success' });
+      return { success: true };
+    } else {
+      db.updatePushLog(logId, { status: 'failed', error: '钉钉返回: ' + (data.errmsg || JSON.stringify(data)) });
+      return { success: false, error: data.errmsg };
+    }
+  } catch (e) {
+    db.updatePushLog(logId, { status: 'failed', error: e.message });
+    return { success: false, error: e.message };
+  }
+}
+
 function loadConfigFromDB() {
   ADMIN_USER = getConfig('admin_user', 'admin');
   ADMIN_PASSWORD = getConfig('admin_password', 'admin888');
@@ -273,6 +312,8 @@ function loadConfigFromDB() {
   LINGXING_APP_SECRET = getConfig('lingxing_app_secret', '');
   SELLERSPRITE_SECRET = getConfig('sellersprite_secret', '');
   WECOM_WEBHOOK_URL = getConfig('wecom_webhook_url', '');
+  DINGTALK_WEBHOOK_URL = getConfig('dingtalk_webhook_url', '');
+  DINGTALK_SECRET = getConfig('dingtalk_secret', '');
 }
 
 // ============================================================
@@ -340,6 +381,7 @@ async function handleAPI(req, res, parts) {
       const ALLOWED_KEYS = [
         'port', 'lingxing_app_id', 'lingxing_app_secret', 'sellersprite_secret',
         'auth_secret', 'wecom_webhook_url', 'memory_limit_mb',
+        'dingtalk_webhook_url', 'dingtalk_secret',
         // 大模型配置
         'ai_llm_provider', 'ai_llm_api_key', 'ai_llm_base_url', 'ai_llm_model'
       ];
@@ -350,6 +392,8 @@ async function handleAPI(req, res, parts) {
       }
       if (body.port) PORT = parseInt(body.port);
       if (body.wecom_webhook_url) WECOM_WEBHOOK_URL = body.wecom_webhook_url;
+      if (body.dingtalk_webhook_url) DINGTALK_WEBHOOK_URL = body.dingtalk_webhook_url;
+      if (body.dingtalk_secret) DINGTALK_SECRET = body.dingtalk_secret;
       if (body.sellersprite_secret) SELLERSPRITE_SECRET = body.sellersprite_secret;
       return sendJSON(res, { success: true });
     }
@@ -418,6 +462,14 @@ async function handleAPI(req, res, parts) {
       const user = authMiddleware(req, res);
       if (!user) return;
       const result = await sendWecomMessage('🧪 广告关键词管理平台测试消息\n\n> 配置验证通过 ✅\n\n时间: ' + new Date().toLocaleString('zh-CN'));
+      return sendJSON(res, result);
+    }
+
+    // === 设置测试钉钉Webhook ===
+    if (parts[0] === 'settings' && parts[1] === 'test-dingtalk' && method === 'POST') {
+      const user = authMiddleware(req, res);
+      if (!user) return;
+      const result = await sendDingtalkMessage('🧪 广告关键词管理平台测试消息\n\n> 配置验证通过 ✅\n\n时间: ' + new Date().toLocaleString('zh-CN'));
       return sendJSON(res, result);
     }
 
