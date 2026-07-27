@@ -1800,17 +1800,11 @@ async function loadSettings() {
 async function saveSettings() {
   const token = localStorage.getItem('auth_token');
   if (!token) return showLogin();
-  const SENSITIVE_FIELDS = ['lingxing_app_secret', 'sellersprite_secret', 'ai_llm_api_key'];
   const fields = ['lingxing_app_id','lingxing_app_secret','sellersprite_secret','wecom_webhook_url','ai_llm_provider','ai_llm_api_key','ai_llm_model','ai_llm_base_url','port','memory_limit_mb'];
   const body = {};
   fields.forEach(key => {
     const el = document.getElementById('s_' + key);
-    if (el) {
-      const val = el.value.trim();
-      // 敏感字段用户没填新值（空白）则跳过，不覆盖数据库已有值
-      if (SENSITIVE_FIELDS.includes(key) && !val) return;
-      body[key] = val;
-    }
+    if (el) body[key] = el.value.trim();
   });
   try {
     const res = await fetch(BASE_PATH + '/api/settings', {

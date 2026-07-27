@@ -278,8 +278,8 @@ async function handleAPI(req, res, parts) {
       const allConfig = getAllConfig();
       const configObj = {};
       allConfig.forEach(c => { configObj[c.key] = c.value; });
-      // 敏感字段（前端不回显）
-      const SENSITIVE_KEYS = ['auth_secret', 'lingxing_app_secret', 'ai_llm_api_key'];
+      // 仅隐藏系统内部密钥
+      const SENSITIVE_KEYS = ['auth_secret'];
       SENSITIVE_KEYS.forEach(k => delete configObj[k]);
       if (configObj.admin_password) configObj.admin_password = '********';
       return sendJSON(res, { settings: configObj });
