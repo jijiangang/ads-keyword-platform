@@ -1878,9 +1878,10 @@ function showAddUserModal() {
   document.getElementById('um_password').placeholder = '输入密码';
   document.getElementById('um_nick_name').value = '';
   document.getElementById('um_role').value = 'user';
-  document.getElementById('userModal').classList.add('active');
-  document.getElementById('userModal').style.display = '';
-  console.log('[showAddUserModal] modal active class added');
+  const el = document.getElementById('userModal');
+  el.classList.add('active');
+  el.style.display = 'flex';
+  console.log('[showAddUserModal] display set to flex');
 }
 
 function editUser(id, username, nickName, role) {
@@ -1893,8 +1894,9 @@ function editUser(id, username, nickName, role) {
   document.getElementById('um_password').placeholder = '留空不修改密码';
   document.getElementById('um_nick_name').value = nickName || '';
   document.getElementById('um_role').value = role || 'user';
-  document.getElementById('userModal').classList.add('active');
-  document.getElementById('userModal').style.display = '';
+  const el = document.getElementById('userModal');
+  el.classList.add('active');
+  el.style.display = 'flex';
 }
 
 function closeUserModal() {
@@ -1902,7 +1904,6 @@ function closeUserModal() {
   if (el) {
     el.classList.remove('active');
     el.style.display = 'none';
-    console.log('[closeUserModal] closed');
   }
 }
 
