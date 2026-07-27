@@ -1138,7 +1138,7 @@ ACOS: ${report90.acos.toFixed(1)}%
       if (!query.keyword) return sendError(res, '缺少 keyword 参数');
       try {
         const key = query.keyword.toLowerCase();
-        const CACHE_TTL = 24 * 60 * 60 * 1000;
+        const CACHE_TTL = 72 * 60 * 60 * 1000;
         let ssCache = {};
         try { ssCache = JSON.parse(fs.readFileSync(SS_CACHE_PATH, 'utf8')); } catch(e) { ssCache = {}; }
         
@@ -1185,7 +1185,7 @@ ACOS: ${report90.acos.toFixed(1)}%
       if (!kwList || !Array.isArray(kwList) || kwList.length === 0) return sendError(res, '缺少 keywords 数组');
       
       // 加载本地缓存（24小时自动过期）
-      const CACHE_TTL = 24 * 60 * 60 * 1000; // 24小时
+      const CACHE_TTL = 72 * 60 * 60 * 1000; // 72小时
       let ssCache = {};
       try { ssCache = JSON.parse(fs.readFileSync(SS_CACHE_PATH, 'utf8')); } catch(e) { ssCache = {}; }
       // 清除过期缓存（保留元数据字段）
