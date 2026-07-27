@@ -1441,6 +1441,9 @@ async function handleAPI(req, res, parts) {
 
         // 判断是否配置了 AI 大模型
         const apiKey = getConfig('ai_llm_api_key', '');
+        const provider = getConfig('ai_llm_provider', 'deepseek');
+        const baseUrl = getConfig('ai_llm_base_url', 'https://api.deepseek.com');
+        const model = getConfig('ai_llm_model', 'deepseek-chat');
         if (apiKey) {
           // 走AI大模型分析
           const provider = getConfig('ai_llm_provider', 'deepseek');
@@ -1483,7 +1486,7 @@ async function handleAPI(req, res, parts) {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': '***' + apiKey
+                'Authorization': 'Bearer ' + apiKey
               },
               body: JSON.stringify({
                 model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 2048
