@@ -1644,7 +1644,7 @@ async function analyzeKeyword(keywordId, keywordText, targetType) {
     }
 
     // 广告表现
-    for (const [label, rep] of [['近30天', data.analysis_30d], ['近60天', data.analysis_60d]]) {
+    for (const [label, rep] of [['近30天', data.analysis_30d], ['近60天', data.analysis_60d], ['近90天', data.analysis_90d]]) {
       html += `<div class="analysis-section"><h4>📆 ${label} 广告表现</h4>`;
       html += `<div class="item">👁 展示量: <strong>${rep.impressions.toLocaleString()}</strong></div>`;
       html += `<div class="item">🖱 点击量: <strong>${rep.clicks.toLocaleString()}</strong></div>`;

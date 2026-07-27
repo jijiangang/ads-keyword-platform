@@ -995,12 +995,13 @@ async function handleAPI(req, res, parts) {
           }
         } catch (e) {}
 
-        // 拉取近30天和近60天广告报告（并行）
+        // 拉取近30天、近60天、近90天广告报告（并行）
         let report30 = { impressions: 0, clicks: 0, cost: 0, sales: 0, ctr: 0, cpc: 0, acos: 0 };
         let report60 = { impressions: 0, clicks: 0, cost: 0, sales: 0, ctr: 0, cpc: 0, acos: 0 };
+        let report90 = { impressions: 0, clicks: 0, cost: 0, sales: 0, ctr: 0, cpc: 0, acos: 0 };
         try {
           const now = new Date();
-          const dayReports = await Promise.all([30, 60].map(async (days) => {
+          const dayReports = await Promise.all([30, 60, 90].map(async (days) => {
             const start = new Date(now); start.setDate(start.getDate() - days);
             let acc = { impressions: 0, clicks: 0, cost: 0, sales: 0 };
             for (let d = new Date(start); d <= now; d.setDate(d.getDate() + 1)) {
@@ -1018,14 +1019,17 @@ async function handleAPI(req, res, parts) {
             }
             return acc;
           }));
-          const d30 = dayReports[0], d60 = dayReports[1];
-          report30 = d30; report60 = d60;
+          const d30 = dayReports[0], d60 = dayReports[1], d90 = dayReports[2];
+          report30 = d30; report60 = d60; report90 = d90;
           report30.ctr = d30.impressions > 0 ? d30.clicks / d30.impressions * 100 : 0;
           report30.cpc = d30.clicks > 0 ? d30.cost / d30.clicks : 0;
           report30.acos = d30.sales > 0 ? d30.cost / d30.sales * 100 : 0;
           report60.ctr = d60.impressions > 0 ? d60.clicks / d60.impressions * 100 : 0;
           report60.cpc = d60.clicks > 0 ? d60.cost / d60.clicks : 0;
           report60.acos = d60.sales > 0 ? d60.cost / d60.sales * 100 : 0;
+          report90.ctr = d90.impressions > 0 ? d90.clicks / d90.impressions * 100 : 0;
+          report90.cpc = d90.clicks > 0 ? d90.cost / d90.clicks : 0;
+          report90.acos = d90.sales > 0 ? d90.cost / d90.sales * 100 : 0;
         } catch (e) {}
 
         // 读取 AI 配置
@@ -1064,6 +1068,15 @@ CPC: $${report60.cpc.toFixed(2)}
 花费: $${report60.cost.toFixed(2)}
 销售额: $${report60.sales.toFixed(2)}
 ACOS: ${report60.acos.toFixed(1)}%
+
+--- 近90天广告表现 ---
+展示量: ${report90.impressions}
+点击量: ${report90.clicks}
+CTR: ${report90.ctr.toFixed(1)}%
+CPC: $${report90.cpc.toFixed(2)}
+花费: $${report90.cost.toFixed(2)}
+销售额: $${report90.sales.toFixed(2)}
+ACOS: ${report90.acos.toFixed(1)}%
 
 请按以下格式返回JSON（不要返回任何其他文字）：
 {
@@ -1110,6 +1123,7 @@ ACOS: ${report60.acos.toFixed(1)}%
           sellersprite: ssData,
           analysis_30d: report30,
           analysis_60d: report60,
+          analysis_90d: report90,
           current_bid: current_bid || 0
         });
       } catch (e) {
@@ -1402,9 +1416,10 @@ ACOS: ${report60.acos.toFixed(1)}%
         return rows.flat();
       }
 
-      const [allRows30, allRows60] = await Promise.all([
+      const [allRows30, allRows60, allRows90] = await Promise.all([
         fetchReportsByMonth(30),
-        fetchReportsByMonth(60)
+        fetchReportsByMonth(60),
+        fetchReportsByMonth(90)
       ]);
 
       // 按 keyword_id 索引所有行
@@ -1424,6 +1439,7 @@ ACOS: ${report60.acos.toFixed(1)}%
       }
       const index30 = indexReports(allRows30);
       const index60 = indexReports(allRows60);
+      const index90 = indexReports(allRows90);
 
       function getReport(keywordId, idx) {
         const d = idx[String(keywordId)] || { impressions:0, clicks:0, cost:0, sales:0 };
@@ -1452,6 +1468,7 @@ ACOS: ${report60.acos.toFixed(1)}%
 
         const d30 = getReport(kw.keyword_id, index30);
         const d60 = getReport(kw.keyword_id, index60);
+        const d90 = getReport(kw.keyword_id, index90);
 
         // 判断是否配置了 AI 大模型
         const apiKey = getConfig('ai_llm_api_key', '');
@@ -1550,6 +1567,7 @@ ACOS: ${report60.acos.toFixed(1)}%
           details: engineResult.analysis,
           analysis_30d: d30,
           analysis_60d: d60,
+          analysis_90d: d90,
           current_bid: kw.current_bid || 0
         };
       }
