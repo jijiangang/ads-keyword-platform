@@ -1,0 +1,17 @@
+{
+  "name": "ads-keyword-platform",
+  "version": "1.0.0",
+  "description": "广告关键词AI管理系统 - Docker版",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.11.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

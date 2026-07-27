@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIMI-广告关键词AI管理系统</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; }
+.header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header .subtitle { font-size: 13px; opacity: .8; }
+.header .nav-links { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.header .nav-links a { color: rgba(255,255,255,.85); text-decoration: none; font-size: 13px; padding: 4px 10px; border-radius: 4px; transition: background .2s; white-space: nowrap; }
+.header .nav-links a:hover { background: rgba(255,255,255,.15); }
+.toolbar { background: #fff; padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: end; border-bottom: 1px solid #e0e0e0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.field { display: flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
+.field label { font-size: 12px; color: #666; font-weight: 500; }
+.field select, .field input { height: 34px; border: 1px solid #d0d0d0; border-radius: 6px; padding: 0 10px; font-size: 13px; min-width: 140px; background: #fff; cursor: pointer; }
+.field select:focus, .field input:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,.15); }
+.btn { height: 34px; border: none; border-radius: 6px; padding: 0 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: #1a73e8; color: #fff; }
+.btn-primary:hover { background: #1557b0; }
+.btn-primary:disabled { background: #a0c4ff; cursor: not-allowed; }
+.btn-sm { height: 24px; padding: 0 6px; font-size: 11px; }
+.btn-outline { background: transparent; border: 1px solid #d0d0d0; color: #333; }
+.btn-outline:hover { background: #f5f5f5; }
+.btn-outline.danger { color: #d32f2f; border-color: #d32f2f; }
+.btn-outline.danger:hover { background: #ffebee; }
+.btn-success { background: #2e7d32; color: #fff; }
+.btn-success:hover { background: #1b5e20; }
+.btn-success:disabled { background: #81c784; cursor: not-allowed; }
+
+.container { padding: 16px 24px; }
+
+.tag-sp { background: #e3f2fd; color: #1565c0; }
+.tag-sb { background: #fce4ec; color: #c62828; }
+.tag-sbv { background: #f3e5f5; color: #7b1fa2; }
+.tag-active { background: #e8f5e9; color: #2e7d32; }
+.tag-paused { background: #fff3e0; color: #e65100; }
+.tag-archived { background: #f5f5f5; color: #616161; }
+
+.table-wrap { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.table-tools { padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #e0e0e0; }
+.table-tools .count { font-size: 13px; color: #666; }
+.table-wrap table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+.table-wrap th { position: sticky; top: 0; background: #f8f9fa; padding: 6px 4px; border-bottom: 2px solid #e0e0e0; text-align: center; font-weight: 600; font-size: 11px; color: #555; white-space: nowrap; cursor: pointer; user-select: none; position:relative; }
+.table-wrap th:hover { background: #eef1f5; }
+.group-row th { border-bottom: none !important; padding: 5px 8px !important; font-size: 11px; color: #666; background: #f0f4f8; }
+.group-row .group-label { text-align: center; letter-spacing: 0.5px; }
+.group-row .ss-group { background: #f3eefb; color: #6a1b9a; }
+.group-row + tr th:first-child { border-left: none; }
+.group-row + tr th,
+#headerRow th { border-top: none; }
+.col-resizer { position:absolute; top:0; right:0; width:4px; height:100%; cursor:col-resize; background:transparent; z-index:1; }
+.col-resizer:hover, .col-resizer.resizing { background:rgba(26,115,232,.3); }
+.table-wrap td { padding: 5px 4px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+.td-ss { background: #faf7fc; }
+.table-wrap tr:hover { background: #f5f8ff; }
+.table-wrap tr.disabled td { color: #999; }
+.num { font-variant-numeric: tabular-nums; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 500; }
+.badge-green { background: #e8f5e9; color: #2e7d32; }
+.badge-red { background: #ffebee; color: #c62828; }
+.badge-yellow { background: #fff8e1; color: #f57f17; }
+.badge-gray { background: #f5f5f5; color: #757575; }
+.badge-asin { background: #fff3e0; color: #e65100; font-weight:600; }
+
+.actions-cell { display: flex; gap: 4px; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
+
+.loading { text-align: center; padding: 48px; color: #888; }
+.loading .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: #1a73e8; border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 1000; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+.empty-state { text-align: center; padding: 60px 24px; color: #999; }
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3 { font-size: 16px; color: #666; margin-bottom: 8px; }
+
+/* 列宽控制 — 由 colgroup 管理，不在 CSS 硬编码 */
+
+@media (max-width: 768px) {
+  .toolbar { padding: 12px 16px; }
+  .container { padding: 12px 16px; }
+  .field select, .field input { min-width: 100px; }
+  .table-wrap { overflow-x: auto; }
+}
+.state-filter { display:inline-flex; align-items:center; gap:0; font-size:11px; color:#888; white-space:nowrap; border:1px solid #d0d0d0; border-radius:4px; overflow:hidden; }
+.state-filter input { margin:0; width:0; height:0; opacity:0; position:absolute; }
+.state-filter label { display:inline-flex; align-items:center; gap:2px; cursor:pointer; padding:1px 6px; border-right:1px solid #e0e0e0; font-size:11px; color:#555; }
+.state-filter label:last-child { border-right:none; }
+.state-filter label:hover { background:#e8f0fe; }
+.state-filter label:has(input:checked) { background:#1a73e8; color:#fff; }
+
+/* 汇总栏 */
+.summary-bar { display:flex; gap:0; margin:8px 16px; padding:12px 16px; border-radius:8px; background:#f0f4ff; box-shadow:0 1px 4px rgba(0,0,0,.08); flex-wrap:wrap; text-align:center; }
+.summary-bar .stat-item { flex:1; min-width:90px; padding:4px 10px; border-right:1px solid #e0e8f0; }
+.summary-bar .stat-item:last-child { border-right:none; }
+.summary-bar .stat-label { font-size:12px; color:#666; font-weight:500; letter-spacing:0.5px; }
+.summary-bar .stat-value { font-size:20px; font-weight:700; color:#1a237e; margin-top:4px; transition:color .2s; }
+.summary-bar .stat-value.positive { color:#1b5e20; }
+.summary-bar .stat-value.negative { color:#b71c1c; }
+
+/* 复选框列 */
+.cb-cell { width:36px; min-width:36px; text-align:center; vertical-align:middle; }
+.cb-header { text-align:center; min-width:36px; }
+.cb-cell input, .cb-header input { width:14px; height:14px; cursor:pointer; }
+
+/* 最后修改列 */
+.last-change { font-size:12px; color:#888; cursor:help; text-align:center; }
+
+/* 批量操作栏 */
+.batch-bar { display:none; position:sticky; bottom:0; z-index:10; background:#e8eaf6; border:1px solid #c5cae9; border-radius:8px; padding:10px 16px; margin:8px 16px; flex-wrap:wrap; align-items:center; gap:10px; box-shadow:0 -2px 6px rgba(0,0,0,.08); }
+.batch-bar.visible { display:flex; }
+.batch-bar .count { font-weight:600; color:#283593; font-size:14px; white-space:nowrap; }
+.batch-bar .actions { display:flex; gap:8px; }
+.batch-bar .actions .btn { padding:5px 12px; border-radius:4px; border:1px solid #c5cae9; background:#fff; cursor:pointer; font-size:13px; }
+.batch-bar .actions .btn:hover { background:#e8eaf6; }
+.batch-bar .actions .btn-primary { background:#283593; color:#fff; border-color:#283593; }
+.batch-bar .actions .btn-primary:hover { background:#1a237e; }
+.batch-bar .actions .btn-danger { background:#d32f2f; color:#fff; border-color:#d32f2f; }
+.batch-bar .actions .btn-danger:hover { background:#b71c1c; }
+.batch-bar .actions .btn-ai { background:#1565c0; color:#fff; border-color:#1565c0; height:auto; line-height:inherit; padding:5px 12px; font-size:13px; min-width:0; }
+.batch-bar .actions .btn-ai:hover { background:#0d47a1; }
+/* 建议竞价采纳按钮 */
+.btn-ss { background:#e8e0f0; color:#4a148c; border:1px solid #ce93d8; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer; white-space:nowrap; font-weight:500; }
+.btn-ss:hover { background:#d1c4e9; border-color:#7b1fa2; }
+.btn-ai { background:transparent; color:#9c27b0; border:1px solid #ce93d8; padding:0 4px; min-width:24px; border-radius:4px; font-size:14px; cursor:pointer; height:24px; line-height:22px; text-align:center; }
+.btn-ai:hover { background:#f3e5f5; }
+.site-footer { text-align:center; padding:12px 0; font-size:12px; color:#999; border-top:1px solid #e0e0e0; margin-top:0; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 JIMI-广告关键词AI管理系统</h1>
+  <span class="subtitle">用数字科技实现精准投放</span>
+  <div class="nav-links">
+  </div>
+  <span style="flex:1"></span>
+  <span id="loginUserDisplay" style="font-size:12px;opacity:.8;display:none"></span>
+  <button id="logoutBtn" style="display:none;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer" onclick="handleLogout()">退出</button>
+</div>
+
+<div class="toolbar">
+  <div class="field">
+    <label>店铺</label>
+    <select id="storeSelect"><option value="">— 选择店铺 —</option></select>
+  </div>
+  <div class="field">
+    <label>广告组合</label>
+    <div style="display:flex;align-items:center;gap:4px">
+      <select id="portfolioSelect" style="flex-shrink:0"><option value="">— 全部组合 —</option></select>
+      <div class="state-filter">
+        <label><input type="checkbox" id="hideEmptyPortfolios" checked onchange="toggleHideEmpty()"> 隐藏空组合</label>
+      </div>
+    </div>
+  </div>
+  <div class="field">
+    <label>广告活动</label>
+    <div style="display:flex;align-items:center;gap:4px">
+      <select id="campaignSelect" style="flex-shrink:0"><option value="">— 选择活动 —</option></select>
+      <div class="state-filter">
+        <label><input type="radio" name="campaignState" value="" onchange="loadCampaigns($store.value,$portfolio.value);loadPortfolioCounts($store.value)"> 全部</label>
+        <label><input type="radio" name="campaignState" value="enabled" checked onchange="loadCampaigns($store.value,$portfolio.value);loadPortfolioCounts($store.value)"> 启用</label>
+        <label><input type="radio" name="campaignState" value="paused" onchange="loadCampaigns($store.value,$portfolio.value);loadPortfolioCounts($store.value)"> 关闭</label>
+      </div>
+    </div>
+  </div>
+  <div class="field">
+    <label>时间范围</label>
+    <select id="daysSelect">
+      <option value="7">近 7 天</option>
+      <option value="14" selected>近 14 天</option>
+      <option value="30">近 30 天</option>
+      <option value="60">近 60 天</option>
+      <option value="90">近 90 天</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>&nbsp;</label>
+    <button class="btn btn-primary" id="loadBtn" disabled>🔍 查询关键词</button>
+  </div>
+</div>
+
+<div id="summaryBar" class="summary-bar"></div>
+
+<div class="container">
+  <div class="table-wrap" id="mainTable">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">📋</div>
+      <h3>选择店铺和广告活动后开始查询</h3>
+      <p style="color:#aaa;font-size:13px">支持 SP/SB/SBV 广告类型，SP 可调整竞价</p>
+    </div>
+    <div id="loadingArea" class="loading" style="display:none">
+      <div class="spinner"></div>
+      <div>正在拉取数据...</div>
+    </div>
+    <div id="tableArea" style="display:none">
+      <div class="table-tools">
+        <span class="count" id="countLabel">共 0 个关键词</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="state-filter">
+            <label><input type="radio" name="kwState" value="" onchange="renderTable()"> 全部</label>
+            <label><input type="radio" name="kwState" value="enabled" checked onchange="renderTable()"> ⏳ 启用</label>
+            <label><input type="radio" name="kwState" value="paused" onchange="renderTable()"> ⏸</label>
+          </div>
+          <span style="color:#ccc">|</span>
+          <div class="state-filter">
+            <label><input type="checkbox" id="showZeroOnly" onchange="renderTable()"> 仅无曝光</label>
+          </div>
+          <span style="color:#ccc" id="ssDivider">|</span>
+          <span id="ssStatus" style="font-size:11px;color:#999"></span>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:calc(100vh - 320px);overflow-y:auto">
+        <table>
+          <thead>
+            <tr class="group-row">
+              <th colspan="1" class="cb-header"></th>
+              <th colspan="3" class="group-label">📋 关键词</th>
+              <th colspan="8" class="group-label">📈 领星 · 实际表现</th>
+              <th colspan="10" class="group-label ss-group">🔍 卖家精灵 · 市场数据</th>
+              <th colspan="1" class="group-label" style="font-size:11px;color:#888;padding:2px 4px;text-align:center">🕐 修改</th>
+              <th class="group-label text-center">⚙️ 操作</th>
+            </tr>
+            <tr id="headerRow">
+              <th class="cb-header"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" title="全选"></th>
+              <th onclick="sortBy('keyword_text')" id="h_keyword_text">关键词 ↕</th>
+              <th onclick="sortBy('match_type')" id="h_match_type">匹配 ↕</th>
+              <th onclick="sortBy('state')" id="h_state">状态 ↕</th>
+              <th onclick="sortBy('impressions')" class="num" id="h_impressions">展示量 ↕</th>
+              <th onclick="sortBy('clicks')" class="num" id="h_clicks">点击量 ↕</th>
+              <th onclick="sortBy('ctr')" class="num" id="h_ctr">CTR % ↕</th>
+              <th onclick="sortBy('cpc')" class="num" id="h_cpc">CPC $ ↕</th>
+              <th onclick="sortBy('cost')" class="num" id="h_cost">花费 $ ↕</th>
+              <th onclick="sortBy('sales')" class="num" id="h_sales">销售额 $ ↕</th>
+              <th onclick="sortBy('acos')" class="num" id="h_acos">ACOS % ↕</th>
+              <th onclick="sortBy('bid')" class="num" id="h_bid">当前竞价 $ ↕</th>
+              <th onclick="sortBy('market_cpc')" class="num" id="h_market_cpc">市场CPC $ ↕</th>
+              <th onclick="sortBy('market_cpc_range')" class="num" id="h_market_range">竞价范围 ↕</th>
+              <th onclick="sortBy('ss_vol')" class="num" id="h_ss_search_vol">搜索量 ↕</th>
+              <th onclick="sortBy('ss_comp')" class="num" id="h_ss_competition">竞争度 ↕</th>
+              <th onclick="sortBy('ss_purchases')" class="num" id="h_ss_purchases">购买量 ↕</th>
+              <th onclick="sortBy('ss_growth')" class="num" id="h_ss_growth">搜索增长率 ↕</th>
+              <th onclick="sortBy('ss_sdr')" class="num" id="h_ss_sdr">供需比 ↕</th>
+              <th onclick="sortBy('ss_ara_click')" class="num" id="h_ss_ara_click">集中度 ↕</th>
+              <th onclick="sortBy('ss_products')" class="num" id="h_ss_products">商品数 ↕</th>
+              <th onclick="sortBy('ss_avg_price')" class="num" id="h_ss_avg_price">均价 $ ↕</th>
+              <th onclick="sortBy('last_change')" id="h_last_change">记录 ↕</th>
+              <th class="text-center" id="h_actions">操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="batchBar" class="batch-bar">
+  <span class="count" id="batchCount">已选择 0 个</span>
+  <div class="actions">
+    <button class="btn btn-primary" onclick="batchSetBid()">💰 批量调价</button>
+    <button class="btn" onclick="batchToggleState('paused')">⏸</button>
+    <button class="btn" onclick="batchToggleState('enabled')">▶</button>
+    <button class="btn btn-ai" onclick="batchAIAnalyze()" id="batchAiBtn">🤖 批量分析</button>
+    <button class="btn btn-danger" onclick="clearSelection()">✕</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ================================================================ -->
+<!-- 登录遮罩 -->
+<!-- ================================================================ -->
+<div id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <h2 style="margin:0 0 4px 0;font-size:18px;color:#333">JIMI-广告关键词AI管理系统</h2>
+    <p style="margin:0 0 20px 0;font-size:13px;color:#888">请输入访问密码</p>
+    <div class="login-field">
+      <label>用户名</label>
+      <input type="text" id="loginUser" placeholder="用户名" value="jijiangang" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+    </div>
+    <div id="loginError" style="color:#d32f2f;font-size:12px;margin-bottom:10px;min-height:18px"></div>
+    <button id="loginBtn" class="login-btn" onclick="handleLogin()">登 录</button>
+    <p style="font-size:11px;color:#aaa;margin:12px 0 0 0">提示：按 Enter 键可直接登录</p>
+    <div style="margin-top:20px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#bbb">© 广东吉米智能科技有限公司</div>
+  </div>
+</div>
+
+<style>
+#loginOverlay {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.5); z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+}
+.login-box {
+  background:#fff; border-radius:12px; padding:40px 36px 32px;
+  width:340px; max-width:90vw; text-align:center;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);
+}
+.login-icon { font-size:40px; margin-bottom:12px; }
+.login-field { text-align:left; margin-bottom:14px; }
+.login-field label { display:block; font-size:12px; color:#666; margin-bottom:4px; font-weight:500; }
+.login-field input {
+  width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px;
+  font-size:14px; box-sizing:border-box; outline:none; transition:border-color .2s;
+}
+.login-field input:focus { border-color:#1a73e8; box-shadow:0 0 0 2px rgba(26,115,232,.15); }
+.login-btn {
+  width:100%; padding:11px; background:#1a73e8; color:#fff; border:none;
+  border-radius:6px; font-size:15px; font-weight:500; cursor:pointer;
+  transition:background .2s;
+}
+.login-btn:hover { background:#0d47a1; }
+.login-btn:disabled { background:#90caf9; cursor:not-allowed; }
+</style>
+
+<script>
+// ================================================================
+// 状态
+// ================================================================
+let stores = [], portfolios = [], campaigns = [], keywords = [];
+let sortField = 'cost';
+let sortDir = -1; // -1 = desc
+let isRunning = false;
+let hideEmptyPortfolios = true; // 默认隐藏无活动的组合（统计全量 campaign，非仅启用）
+let sellerspriteData = {}; // 卖家精灵市场数据（keyword→data）
+let selectedIds = new Set(); // 选中的 keyword_id 集合
+
+// ================================================================
+// DOM 引用
+// ================================================================
+const $store = document.getElementById('storeSelect');
+const $portfolio = document.getElementById('portfolioSelect');
+const $campaign = document.getElementById('campaignSelect');
+const $days = document.getElementById('daysSelect');
+const $loadBtn = document.getElementById('loadBtn');
+const $emptyState = document.getElementById('emptyState');
+const $loadingArea = document.getElementById('loadingArea');
+const $tableArea = document.getElementById('tableArea');
+const $tbody = document.getElementById('tbody');
+const $countLabel = document.getElementById('countLabel');
+const $toast = document.getElementById('toast');
+
+// ================================================================
+// 工具函数
+// ================================================================
+function toast(msg, duration = 2500) {
+  $toast.textContent = msg;
+  $toast.classList.add('show');
+  clearTimeout(window._toastId);
+  window._toastId = setTimeout(() => $toast.classList.remove('show'), duration);
+}
+
+// 自动检测 base path（适配 root 或 /plugins/ads/ 前缀，通过 WeCom 插件反代）
+const BASE_PATH = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/+$/, '') || '';
+
+function api(url, opts = {}, timeoutMs = 60000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const token = localStorage.getItem('auth_token');
+  const headers = { ...(opts.headers || {}) };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return fetch(BASE_PATH + url, { ...opts, headers, signal: controller.signal }).then(r => {
+    clearTimeout(timer);
+    if (r.status === 401) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      showLogin();
+      throw new Error('登录已过期，请重新登录');
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).catch(e => {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('请求超时');
+    throw e;
+  });
+}
+
+// ================================================================
+// 批量选择 / 操作
+// ================================================================
+function onRowCheck(el, kwId) {
+  if (el.checked) selectedIds.add(kwId);
+  else selectedIds.delete(kwId);
+  // 更新全选框
+  document.getElementById('selectAll').checked = selectedIds.size === keywords.length;
+  updateBatchBar();
+}
+
+function toggleSelectAll(checked) {
+  for (const kw of keywords) {
+    if (checked) selectedIds.add(kw.keyword_id);
+    else selectedIds.delete(kw.keyword_id);
+  }
+  // 同步所有复选框
+  document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb => cb.checked = checked);
+  updateBatchBar();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.getElementById('selectAll').checked = false;
+  updateBatchBar();
+}
+
+function updateBatchBar() {
+  const bar = document.getElementById('batchBar');
+  const count = document.getElementById('batchCount');
+  count.textContent = `已选择 ${selectedIds.size} 个`;
+  bar.classList.toggle('visible', selectedIds.size > 0);
+}
+
+// 批量调价：直接采纳各自的建议竞价
+function batchSetBid() {
+  if (selectedIds.size === 0) { toast('请先选择关键词'); return; }
+  doBatchAction('bid');
+}
+
+async function doBatchAction(actionType, value) {
+  const sid = $store.value;
+  if (!sid) { toast('缺少店铺信息'); return; }
+
+  const selected = keywords.filter(k => selectedIds.has(k.keyword_id));
+  if (selected.length === 0) { toast('未选择关键词'); return; }
+
+  // 按 target_type 分组
+  // 计算建议竞价：市场CPC÷1.25（首页顶部+25%），回落领星CPC×1.15
+  function calcBid(k) {
+    const kt = (k.keyword_text || '').toLowerCase();
+    const ss = sellerspriteData[kt];
+    if (ss && ss.market_cpc && ss.market_cpc !== '—') {
+      const mkt = parseFloat(ss.market_cpc);
+      if (!isNaN(mkt) && mkt > 0) return Math.ceil(mkt / 1.25 * 20) / 20;
+    }
+    return (k.cpc && k.cpc > 0) ? Math.ceil(k.cpc * 1.15 * 20) / 20 : null;
+  }
+  const kwGroup = selected.filter(k => k.target_type !== 'asin').map(k => ({
+    keywordId: k.keyword_id,
+    keyword_text: k.keyword_text || '',
+    _suggestedBid: calcBid(k),
+    current_bid: k.bid || 0
+  }));
+  const asinGroup = selected.filter(k => k.target_type === 'asin').map(k => ({
+    keywordId: k.keyword_id,
+    keyword_text: k.keyword_text || '',
+    _suggestedBid: calcBid(k),
+    current_bid: k.bid || 0
+  }));
+
+  let successCount = 0;
+  const label = actionType === 'bid' ? '调价' : (value === 'paused' ? '暂停' : '启用');
+  const stateValue = actionType === 'state' ? value : undefined;
+
+  // 批量调价（每词各自建议竞价）
+  if (actionType === 'bid') {
+    for (const group of [kwGroup, asinGroup]) {
+      if (group.length === 0) continue;
+      const targetType = group === asinGroup ? 'asin' : 'keyword';
+      // 跳过没有建议竞价的项
+      const validActions = group.filter(k => k._suggestedBid !== null).map(k => ({
+        keywordId: k.keywordId,
+        keyword_text: k.keyword_text,
+        bid: k._suggestedBid,
+        current_bid: k.current_bid
+      }));
+      if (validActions.length === 0) {
+        toast(`${targetType === 'asin' ? 'ASIN' : '关键词'}组无有效建议竞价，跳过`);
+        continue;
+      }
+      const skipped = group.length - validActions.length;
+      try {
+        const res = await api('/api/keywords/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sid: Number(sid), target_type: targetType, keywords: validActions })
+        }, 30000);
+        if (res.success) successCount += validActions.length;
+        else toast(`${targetType}调价失败: ${res.error || '未知'}`);
+        if (skipped > 0) toast(`⚠️ ${skipped} 个${targetType}无建议竞价，已跳过`);
+      } catch (e) { toast(`${targetType}调价失败: ${e.message}`); }
+    }
+  } else {
+    for (const group of [kwGroup, asinGroup]) {
+      if (group.length === 0) continue;
+      const targetType = group === asinGroup ? 'asin' : 'keyword';
+      const actions = group.map(k => ({ keywordId: k.keywordId, keyword_text: k.keyword_text, state: stateValue }));
+      try {
+        const res = await api('/api/keywords/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sid: Number(sid), target_type: targetType, keywords: actions })
+        }, 30000);
+        if (res.success) successCount += group.length;
+        else toast(`${targetType}${label}失败: ${res.error || '未知'}`);
+      } catch (e) { toast(`${targetType}${label}失败: ${e.message}`); }
+    }
+  }
+
+  if (successCount > 0) {
+    const skip = actionType === 'bid' ? `（其中 ${selected.length - successCount} 个无建议竞价被跳过）` : '';
+    toast(`✅ 已${label} ${successCount} 个${skip}`);
+    // 更新本地数据
+    for (const k of selected) {
+      if (actionType === 'bid') {
+        const sb = calcBid(k);
+        if (sb !== null) k.bid = sb;
+      } else if (stateValue) k.state = stateValue;
+    }
+    clearSelection();
+    renderTable();
+  }
+}
+
+// 批量暂停/启用
+function batchToggleState(newState) {
+  if (selectedIds.size === 0) { toast('请先选择关键词'); return; }
+  doBatchAction('state', newState);
+}
+
+function fmtNum(n, decimals = 2) {
+  if (n === 0 || n === undefined || n === null) return '—';
+  const d = Math.pow(10, decimals);
+  return (Math.round(n * d) / d).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function fmtPct(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return n.toFixed(2) + '%';
+}
+
+function fmtDollar(n) {
+  if (n === 0 || n === undefined || n === null) return '—';
+  return '$' + fmtNum(n);
+}
+
+function acosBadge(acos) {
+  if (acos === null || acos === undefined || isNaN(acos)) return '<span class="badge badge-gray">—</span>';
+  if (acos < 20) return `<span class="badge badge-green">${acos.toFixed(1)}%</span>`;
+  if (acos < 40) return `<span class="badge badge-yellow">${acos.toFixed(1)}%</span>`;
+  return `<span class="badge badge-red">${acos.toFixed(1)}%</span>`;
+}
+
+function stateBadge(state) {
+  state = (state || '').toLowerCase();
+  if (state === 'enabled') return '<span class="badge badge-green">启用</span>';
+  if (state === 'paused') return '<span class="badge badge-yellow">暂停</span>';
+  if (state === 'archived') return '<span class="badge badge-gray">归档</span>';
+  return `<span class="badge badge-gray">${state || '—'}</span>`;
+}
+
+function matchTypeLabel(mt) {
+  mt = (mt || '').toLowerCase();
+  if (mt === 'exact') return '精准';
+  if (mt === 'phrase') return '词组';
+  if (mt === 'broad') return '广泛';
+  return mt || '—';
+}
+
+// ================================================================
+// 加载店铺
+// ================================================================
+async function loadStores() {
+  try {
+    const data = await api('/api/stores');
+    stores = data.stores || [];
+    $store.innerHTML = '<option value="">— 选择店铺 —</option>' + stores.map(s =>
+      `<option value="${s.sid}">${s.name} (${s.country || ''})</option>`
+    ).join('');
+    if (stores.length > 0) $loadBtn.disabled = false;
+  } catch (e) {
+    toast('加载店铺失败: ' + e.message);
+    $store.innerHTML = '<option value="">加载失败</option>';
+  }
+}
+
+// ================================================================
+// 加载广告组合
+// ================================================================
+async function loadPortfolios(sid) {
+  $portfolio.innerHTML = '<option value="">加载中...</option>';
+  try {
+    const [portData, countData] = await Promise.all([
+      api(`/api/portfolios?sid=${sid}`),
+      api(`/api/portfolio-counts?sid=${sid}`).catch(() => ({ counts: {} }))
+    ]);
+    portfolios = portData.portfolios || [];
+    const counts = countData.counts || {};
+    // 缓存每个 portfolio 的活动数
+    portfolios.forEach(p => p.campaignCount = counts[p.portfolio_id] || 0);
+    renderPortfolios();
+  } catch (e) {
+    toast('加载广告组合失败: ' + e.message);
+    $portfolio.innerHTML = '<option value="">— 全部组合 —</option><option value="">加载失败</option>';
+    portfolios = [];
+  }
+}
+
+// 刷新广告组合活动统计数（根据当前选中的状态过滤）
+async function loadPortfolioCounts(sid) {
+  try {
+    const stateRadio = document.querySelector('input[name="campaignState"]:checked');
+    const stateFilter = stateRadio ? stateRadio.value : 'enabled';
+    const countData = await api(`/api/portfolio-counts?sid=${sid}&state=${stateFilter}`).catch(() => ({ counts: {} }));
+    const counts = countData.counts || {};
+    portfolios.forEach(p => p.campaignCount = counts[p.portfolio_id] || 0);
+    renderPortfolios();
+  } catch (e) {
+    // 静默失败，不影响主体流程
+  }
+}
+
+// 切换隐藏/显示空组合
+function toggleHideEmpty() {
+  hideEmptyPortfolios = document.getElementById('hideEmptyPortfolios').checked;
+  renderPortfolios();
+  // 重置活动下拉
+  $campaign.innerHTML = '<option value="">— 选择活动 —</option>';
+}
+
+// 渲染广告组合下拉（根据 hideEmpty 过滤，保留当前选中值）
+function renderPortfolios() {
+  const prev = $portfolio.value;
+  let filtered = portfolios;
+  if (hideEmptyPortfolios) {
+    filtered = portfolios.filter(p => p.campaignCount > 0);
+  }
+  $portfolio.innerHTML = '<option value="">— 全部组合 —</option>' + filtered.map(p =>
+    `<option value="${p.portfolio_id || p.portfolioId}">${p.name || '未命名'} (${p.campaignCount})</option>`
+  ).join('');
+  // 恢复之前选中的组合（如果新选项里还有该组合）
+  if (prev) $portfolio.value = prev;
+}
+
+// ================================================================
+// 加载广告活动
+// ================================================================
+async function loadCampaigns(sid, portfolioId) {
+  $campaign.innerHTML = '<option value="">加载中...</option>';
+  try {
+    const stateRadio = document.querySelector('input[name="campaignState"]:checked');
+    const stateFilter = stateRadio ? stateRadio.value : '';
+    let url = `/api/campaigns?sid=${sid}`;
+    if (portfolioId) url += `&portfolio_id=${portfolioId}`;
+    if (stateFilter) url += `&state=${stateFilter}`;
+    const data = await api(url);
+    campaigns = data.campaigns || [];
+    if (campaigns.length === 0) {
+      const stateLabel = stateFilter === 'enabled' ? '启用' : (stateFilter === 'paused' ? '关闭' : '全部');
+      toast('该'+(portfolioId?'组合无':'店铺无')+stateLabel+'中的活动，试试切换状态或组合', 3000);
+      $campaign.innerHTML = '<option value="">— 选择活动 —</option>' +
+        '<option value="" disabled style="color:#999;">⚠ 无' + stateLabel + '中的活动</option>';
+    } else {
+      $campaign.innerHTML = '<option value="">— 选择活动 —</option>' + campaigns.map(c =>
+        `<option value="${c.campaign_id}">[${c.campaign_type_label || (c.campaign_type || '?').toUpperCase()}] ${c.name || '未命名'}</option>`
+      ).join('');
+    }
+  } catch (e) {
+    toast('加载广告活动失败: ' + e.message);
+    $campaign.innerHTML = '<option value="">— 选择活动 —</option><option value="">加载失败</option>';
+    campaigns = [];
+  }
+}
+
+// ================================================================
+// 加载关键词
+// ================================================================
+async function loadKeywords(sid, campaignId, days) {
+  $loadingArea.style.display = 'block';
+  $emptyState.style.display = 'none';
+  $tableArea.style.display = 'none';
+  try {
+    const data = await api(`/api/keywords?sid=${sid}&campaign_id=${campaignId}&days=${days}`);
+    keywords = data.keywords || [];
+    window.__allKeywords = keywords;
+    renderTable();
+    $loadingArea.style.display = 'none';
+    $tableArea.style.display = 'block';
+    toast(`已加载 ${keywords.length} 个关键词`);
+    loadSellerspriteData();
+  } catch (e) {
+    toast('加载关键词失败: ' + e.message);
+    $loadingArea.style.display = 'none';
+    $emptyState.style.display = 'block';
+    $emptyState.innerHTML = `<div class="icon">⚠️</div><h3>加载失败</h3><p style="color:#d32f2f;font-size:13px">${e.message}</p>`;
+  }
+}
+
+// ================================================================
+// 渲染活动信息
+// ================================================================
+// 渲染表格
+// ================================================================
+function renderTable() {
+  const showZero = document.getElementById('showZeroOnly').checked;
+  const kwStateRadio = document.querySelector('input[name="kwState"]:checked');
+  const kwStateFilter = kwStateRadio ? kwStateRadio.value : '';
+
+  let filtered = [...keywords];
+
+  // 关键词状态筛选（全部/启用/暂停）
+  if (kwStateFilter === 'enabled') {
+    filtered = filtered.filter(k => (k.state || '').toLowerCase() === 'enabled');
+  } else if (kwStateFilter === 'paused') {
+    filtered = filtered.filter(k => (k.state || '').toLowerCase() === 'paused');
+  }
+
+  if (showZero) {
+    filtered = filtered.filter(k => k.impressions === 0 || k.clicks === 0);
+  }
+
+  // 清理已选择中不存在的 ID（过滤导致）
+  const validIds = new Set(filtered.map(k => k.keyword_id));
+  for (const id of selectedIds) {
+    if (!validIds.has(id)) selectedIds.delete(id);
+  }
+  updateBatchBar();
+
+  // 排序
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortField.startsWith('ss_') || sortField === 'market_cpc' || sortField === 'market_cpc_range') {
+      const sa = sellerspriteData[(a.keyword_text || '').toLowerCase()];
+      const sb = sellerspriteData[(b.keyword_text || '').toLowerCase()];
+      const getNum = (obj, field, def) => obj && obj[field] != null && obj[field] !== '—' ? parseFloat(String(obj[field]).replace(/[^0-9.-]/g,'')) || 0 : def;
+      if (sortField === 'ss_vol') {
+        va = getNum(sa, 'search_vol', -Infinity); vb = getNum(sb, 'search_vol', -Infinity);
+      } else if (sortField === 'ss_comp') {
+        va = getNum(sa, 'competition', -Infinity); vb = getNum(sb, 'competition', -Infinity);
+      } else if (sortField === 'market_cpc') {
+        va = getNum(sa, 'market_cpc', -Infinity); vb = getNum(sb, 'market_cpc', -Infinity);
+      } else if (sortField === 'market_cpc_range') {
+        va = getNum(sa, 'market_cpc_min', -Infinity); vb = getNum(sb, 'market_cpc_min', -Infinity);
+      } else if (sortField === 'ss_purchases') {
+        va = getNum(sa, 'purchases', -Infinity); vb = getNum(sb, 'purchases', -Infinity);
+      } else if (sortField === 'ss_growth') {
+        va = getNum(sa, 'growth', -Infinity); vb = getNum(sb, 'growth', -Infinity);
+      } else if (sortField === 'ss_sdr') {
+        va = getNum(sa, 'supply_demand_ratio', -Infinity); vb = getNum(sb, 'supply_demand_ratio', -Infinity);
+      } else if (sortField === 'ss_ara_click') {
+        va = getNum(sa, 'ara_click_rate', -Infinity); vb = getNum(sb, 'ara_click_rate', -Infinity);
+      } else if (sortField === 'ss_products') {
+        va = getNum(sa, 'products', -Infinity); vb = getNum(sb, 'products', -Infinity);
+      } else if (sortField === 'ss_avg_price') {
+        va = getNum(sa, 'avg_price', -Infinity); vb = getNum(sb, 'avg_price', -Infinity);
+      } else {
+        va = -Infinity; vb = -Infinity;
+      }
+    } else {
+      va = a[sortField] ?? '';
+      vb = b[sortField] ?? '';
+    }
+    if (sortField === 'last_change') {
+      va = a.last_change?.timestamp || '';
+      vb = b.last_change?.timestamp || '';
+    }
+    const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
+    return cmp * sortDir;
+  });
+
+  $countLabel.textContent = `共 ${filtered.length} 个关键词` + (filtered.length < keywords.length ? `（已过滤 ${keywords.length - filtered.length}）` : '');
+
+  // 汇总统计（基于当前过滤后的数据）
+  renderSummary(filtered);
+
+  if (filtered.length === 0) {
+    $tbody.innerHTML = `<tr><td colspan="18" style="text-align:center;padding:32px;color:#999;">无匹配的关键词</td></tr>`;
+    return;
+  }
+
+  // 卖家精灵数据为空时的处理（补齐「—」占位重新渲染避免一直显示「查中...」）
+  if (Object.keys(sellerspriteData).length > 0) {
+    for (const kw of filtered) {
+      const key = (kw.keyword_text || '').toLowerCase();
+      if (!sellerspriteData[key]) {
+        sellerspriteData[key] = { search_vol: '—', competition: '—', market_cpc: '—', market_cpc_min: '—', market_cpc_max: '—', purchases: '—', growth: '—', products: '—', supply_demand_ratio: '—', ara_click_rate: '—', avg_price: '—' };
+      }
+    }
+  }
+
+  const isSB = false;
+
+  $tbody.innerHTML = filtered.map(kw => {
+    const rowClass = (kw.state || '').toLowerCase() === 'paused' ? ' disabled' : '';
+
+    // 建议竞价：市场CPC÷1.25（首页顶部+25%），回落实际CPC·1.15
+    const kwText = (kw.keyword_text || '').toLowerCase();
+    const ss = sellerspriteData[kwText];
+    let suggestedBid = null;
+    if (ss && ss.market_cpc && ss.market_cpc !== '—') {
+      const mktCpc = parseFloat(ss.market_cpc);
+      if (!isNaN(mktCpc) && mktCpc > 0) {
+        suggestedBid = Math.ceil(mktCpc / 1.25 * 20) / 20;
+      }
+    }
+    // 如果卖家精灵无数据，回落领星CPC·1.15
+    if (suggestedBid === null && kw.cpc && kw.cpc > 0) {
+      suggestedBid = Math.ceil(kw.cpc * 1.15 * 20) / 20;
+    }
+
+    let actionBtns = '';
+    if (!isSB) {
+      const isPaused = (kw.state || '').toLowerCase() === 'paused';
+      const hasSuggestion = suggestedBid !== null && !isNaN(suggestedBid);
+      let bidDiffHtml = '';
+      if (hasSuggestion && kw.bid && kw.bid > 0) {
+        const diff = suggestedBid - kw.bid;
+        const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(2);
+        const diffColor = diff > 0 ? '#d32f2f' : (diff < 0 ? '#2e7d32' : '#888');
+        bidDiffHtml = `<span style="font-size:10px;color:${diffColor};margin-left:2px;font-weight:600">(${diffStr})</span>`;
+      }
+      const bidBtn = hasSuggestion
+        ? `<button class="btn btn-sm btn-ss" onclick="updateBid(${kw.keyword_id}, ${suggestedBid})">采纳 $${suggestedBid.toFixed(2)}${bidDiffHtml}</button>`
+        : `<button class="btn btn-sm btn-outline" onclick="manuallySetBid(${kw.keyword_id})" title="手动输入竞价">✏️ 调价</button>`;
+      actionBtns = `
+        ${bidBtn}
+        <button class="btn btn-sm btn-outline ${isPaused ? '' : 'danger'}" onclick="togglePause(${kw.keyword_id}, '${isPaused ? 'enabled' : 'paused'}')">${isPaused ? '▶' : '⏸'}</button>
+        <button class="btn btn-sm btn-ai" onclick="analyzeKeyword(${kw.keyword_id}, '${kw.keyword_text.replace(/'/g, "\\'")}', '${kw.target_type}')" title="AI 分析">🤖</button>
+      `;
+    } else {
+      actionBtns = `<span style="color:#999;font-size:11px">只读</span>`;
+    }
+
+    // 卖家精灵数据
+    const ssVol = ss ? (ss.search_vol || '—') : '<span style="color:#ccc">查中...</span>';
+    const ssComp = ss ? (ss.competition || '—') : '';
+    const mktCpc = ss && ss.market_cpc && ss.market_cpc !== '—' ? `$${ss.market_cpc}` : '—';
+    const mktRange = ss && ss.market_cpc_min && ss.market_cpc_min !== '—' ? `$${ss.market_cpc_min}~$${ss.market_cpc_max}` : '—';
+    const ssPurchases = ss && ss.purchases && ss.purchases !== '—' ? ss.purchases : '—';
+    const ssGrowth = ss && ss.growth != null && ss.growth !== '—' ? ss.growth : null;
+    const ssGrowthHtml = ssGrowth !== null ? `<span style="color:${ssGrowth > 0 ? '#2e7d32' : '#d32f2f'}">${ssGrowth > 0 ? '📈' : '📉'} ${ssGrowth.toFixed(1)}%</span>` : '—';
+    const ssSdr = ss && ss.supply_demand_ratio != null && ss.supply_demand_ratio !== '—' ? Number(ss.supply_demand_ratio).toFixed(2) : '—';
+    const ssAraClick = ss && ss.ara_click_rate != null && ss.ara_click_rate !== '—' ? (Number(ss.ara_click_rate) * 100).toFixed(1) + '%' : '—';
+    const ssProducts = ss && ss.products != null && ss.products !== '—' ? Number(ss.products).toLocaleString() : '—';
+    const ssAvgPrice = ss && ss.avg_price != null && ss.avg_price !== '—' ? `$${Number(ss.avg_price).toFixed(2)}` : '—';
+
+    const isAsin = kw.target_type === 'asin';
+    const kwDisplay = isAsin ? `<span class="badge badge-asin">ASIN</span> ${kw.keyword_text || '—'}` : (kw.keyword_text || '—');
+    const checked = selectedIds.has(kw.keyword_id) ? 'checked' : '';
+    const kwIdSafe = kw.keyword_id.toString().replace(/\D/g,'');
+    // 距上次修改天数
+    let lastChangeLabel = '—';
+    let lastChangeTitle = '';
+    if (kw.last_change) {
+      const ch = kw.last_change;
+      const ts = ch.timestamp;
+      const detailParts = [];
+      if (ch.changes?.bid) {
+        const f = ch.changes.bid.from;
+        const t = ch.changes.bid.to;
+        if (f !== undefined && f !== null) {
+          detailParts.push('调价: $' + Number(f).toFixed(2) + ' → $' + Number(t).toFixed(2));
+        } else {
+          detailParts.push('调价: $' + Number(t).toFixed(2));
+        }
+      }
+      if (ch.changes?.state?.to) detailParts.push(ch.changes.state.to === 'paused' ? '暂停' : '启用');
+      const detailText = detailParts.length ? detailParts.join(', ') : '修改';
+      const dateStr = ts ? ts.slice(0,10).replace(/-/g,'/') : '';
+      const timeStr = ts ? ts.slice(11,16) : '';
+      lastChangeTitle = `${detailText} | ${dateStr} ${timeStr}`;
+      // 计算天数
+      if (ts) {
+        const now = new Date();
+        const then = new Date(ts);
+        const diffMs = now - then;
+        const diffDays = Math.floor(diffMs / (1000*60*60*24));
+        if (diffDays > 30) {
+          lastChangeLabel = Math.floor(diffDays / 30) + '月前';
+        } else if (diffDays > 0) {
+          lastChangeLabel = diffDays + '天前';
+        } else {
+          lastChangeLabel = '今天';
+        }
+      } else {
+        lastChangeLabel = '—';
+      }
+    }
+    return `<tr class="${rowClass}">
+      <td class="cb-cell"><input type="checkbox" ${checked} data-kwid="${kwIdSafe}" onchange="onRowCheck(this, ${kwIdSafe})"></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${kw.keyword_text}">${kwDisplay}</td>
+      <td>${isAsin ? 'ASIN' : matchTypeLabel(kw.match_type)}</td>
+      <td>${stateBadge(kw.state)}</td>
+      <td class="num">${fmtNum(kw.impressions, 0)}</td>
+      <td class="num">${fmtNum(kw.clicks, 0)}</td>
+      <td class="num">${fmtPct(kw.ctr)}</td>
+      <td class="num">${fmtDollar(kw.cpc)}</td>
+      <td class="num">${fmtDollar(kw.cost)}</td>
+      <td class="num">${fmtDollar(kw.sales)}</td>
+      <td class="num">${acosBadge(kw.acos)}</td>
+      <td class="num">${fmtDollar(kw.bid)}</td>
+      <td class="num td-ss">${mktCpc}</td>
+      <td class="num td-ss" style="font-size:11px">${mktRange}</td>
+      <td class="num td-ss">${ssVol}</td>
+      <td class="num td-ss">${ssComp}</td>
+      <td class="num td-ss">${ssPurchases}</td>
+      <td class="num td-ss" style="font-size:11px">${ssGrowthHtml}</td>
+      <td class="num td-ss" style="font-size:11px">${ssSdr}</td>
+      <td class="num td-ss" style="font-size:11px">${ssAraClick}</td>
+      <td class="num td-ss" style="font-size:11px">${ssProducts}</td>
+      <td class="num td-ss">${ssAvgPrice}</td>
+      <td class="last-change" title="${lastChangeTitle}">${lastChangeLabel}</td>
+      <td class="text-center"><div class="actions-cell">${actionBtns}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ================================================================
+// 汇总统计
+// ================================================================
+function renderSummary(filtered) {
+  let totalCost = 0, totalSales = 0, totalClicks = 0, totalImpressions = 0;
+  for (const kw of filtered) {
+    totalCost += Number(kw.cost || 0);
+    totalSales += Number(kw.sales || 0);
+    totalClicks += Number(kw.clicks || 0);
+    totalImpressions += Number(kw.impressions || 0);
+  }
+  const avgAcos = totalSales > 0 ? (totalCost / totalSales * 100) : 0;
+  const avgCtr = totalImpressions > 0 ? (totalClicks / totalImpressions * 100) : 0;
+  const avgCpc = totalClicks > 0 ? (totalCost / totalClicks) : 0;
+
+  const items = [
+    { label: '关键词', value: String(filtered.length), cls: '' },
+    { label: '总花费', value: fmtDollar(totalCost), cls: '' },
+    { label: '总销售额', value: fmtDollar(totalSales), cls: totalSales >= 0 ? 'positive' : 'negative' },
+    { label: '总点击量', value: fmtNum(totalClicks, 0), cls: '' },
+    { label: '平均CPC', value: fmtDollar(avgCpc), cls: '' },
+    { label: '平均CTR', value: fmtPct(avgCtr), cls: '' },
+    { label: '平均ACOS', value: fmtPct(avgAcos), cls: '' },
+  ];
+
+  document.getElementById('summaryBar').innerHTML = items.map(s =>
+    `<div class="stat-item"><div class="stat-label">${s.label}</div><div class="stat-value${s.cls ? ' ' + s.cls : ''}">${s.value}</div></div>`
+  ).join('');
+}
+
+// ================================================================
+// 排序
+// ================================================================
+function sortBy(field) {
+  if (sortField === field) {
+    sortDir *= -1;
+  } else {
+    sortField = field;
+    sortDir = field === 'keyword_text' || field === 'match_type' || field === 'state' || field.startsWith('ss_') || field === 'last_change' ? 1 : -1;
+  }
+  renderTable();
+}
+
+// ================================================================
+// 更新竞价
+// ================================================================
+async function updateBid(keywordId, suggestedBid) {
+  // 直接使用建议竞价
+  const bid = typeof suggestedBid === 'number' ? suggestedBid : parseFloat(suggestedBid);
+  if (isNaN(bid) || bid < 0) { toast('建议竞价无效'); return; }
+
+  const sid = $store.value;
+  if (!sid) { toast('缺少店铺信息'); return; }
+
+  // 获取 target_type
+  const kw = keywords.find(k => k.keyword_id === keywordId);
+  const targetType = kw?.target_type || 'keyword';
+
+  try {
+    const res = await api('/api/keywords/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sid: Number(sid),
+        target_type: targetType,
+        keywords: [{ keywordId, bid, keyword_text: kw?.keyword_text || '', current_bid: kw?.bid || 0 }]
+      })
+    });
+    if (res.success) {
+      toast(`✅ ${targetType === 'asin' ? 'ASIN' : '关键词'} ${keywordId} 竞价已更新为 $${bid}`);
+      // 更新本地数据
+      if (kw) kw.bid = bid;
+    } else {
+      toast('更新失败: ' + (res.error || '未知错误'));
+    }
+  } catch (e) {
+    toast('更新失败: ' + e.message);
+  }
+}
+
+// ================================================================
+// 暂停/启用
+// ================================================================
+// 手动输入竞价
+async function manuallySetBid(keywordId) {
+  const val = prompt('输入新的竞价金额（$）：', '');
+  if (val === null || val.trim() === '') return;
+  const bid = parseFloat(val.trim());
+  if (isNaN(bid) || bid <= 0) { toast('请输入有效的正数金额'); return; }
+  await updateBid(keywordId, Math.round(bid * 100) / 100);
+}
+
+async function togglePause(keywordId, newState) {
+  const sid = $store.value;
+  if (!sid) { toast('缺少店铺信息'); return; }
+
+  // 获取 target_type
+  const kw = keywords.find(k => k.keyword_id === keywordId);
+  const targetType = kw?.target_type || 'keyword';
+  const label = newState === 'paused' ? '暂停' : '启用';
+
+  try {
+    const res = await api('/api/keywords/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sid: Number(sid),
+        target_type: targetType,
+        keywords: [{ keywordId, state: newState, keyword_text: kw?.keyword_text || '' }]
+      })
+    });
+    if (res.success) {
+      toast(`✅ ${targetType === 'asin' ? 'ASIN' : '关键词'}已${label}`);
+      // 更新本地数据
+      if (kw) kw.state = newState;
+      renderTable();
+    } else {
+      toast(`${label}失败: ` + (res.error || '未知错误'));
+    }
+  } catch (e) {
+    toast(`${label}失败: ` + e.message);
+  }
+}
+
+// ================================================================
+// 加载卖家精灵市场数据（存入全局 sellerspriteData，触发 renderTable）
+// ================================================================
+async function loadSellerspriteData() {
+  const $ssStatus = document.getElementById('ssStatus');
+  const $ssDivider = document.getElementById('ssDivider');
+  
+  // 提取不重复的关键词文本（仅限 keyword 类型）
+  const kwSet = new Set(keywords.filter(k => k.target_type !== 'asin').map(k => k.keyword_text).filter(Boolean));
+  const kwList = [...kwSet];
+  
+  if (kwList.length === 0) {
+    sellerspriteData = {};
+    $ssDivider.style.display = 'none';
+    $ssStatus.textContent = '';
+    return;
+  }
+  
+  // 先置为查中状态
+  sellerspriteData = {};
+  renderTable();
+  
+  const sid = $store.value;
+  const store = stores.find(s => String(s.sid) === String(sid));
+  const marketplace = store?.country || 'US';
+  
+  $ssDivider.style.display = '';
+  $ssStatus.textContent = '查询中...';
+  
+  const BATCH_SIZE = 10;
+  const totalBatches = Math.ceil(kwList.length / BATCH_SIZE);
+  
+  try {
+    const batches = [];
+    for (let i = 0; i < totalBatches; i++) {
+      batches.push(kwList.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE));
+    }
+    
+    let quotaExhausted = false;
+    const newData = {};
+    
+    for (let idx = 0; idx < batches.length; idx++) {
+      const batch = batches[idx];
+      if (quotaExhausted) {
+        // 额度已用完，剩余批次的词直接补默认值
+        for (const kw of batch) {
+          newData[kw.toLowerCase()] = { search_vol: '—', competition: '—', market_cpc: '—', market_cpc_min: '—', market_cpc_max: '—' };
+        }
+        continue;
+      }
+      $ssStatus.textContent = `卖家精灵 ${idx * BATCH_SIZE}/${kwList.length}...`;
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(BASE_PATH + '/api/sellersprite/keywords-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || '') },
+          body: JSON.stringify({ keywords: batch, marketplace })
+        });
+        if (res.status === 401) { localStorage.removeItem('auth_token'); showLogin(); throw new Error('登录过期'); }
+        const json = await res.json();
+        if (json.quota_exhausted) {
+          quotaExhausted = true;
+          $ssStatus.textContent = '⚠️ 卖家精灵本月额度已用完';
+          $ssStatus.style.color = '#e65100';
+        }
+        if (json.data) Object.assign(newData, json.data);
+      } catch (e) {
+        console.error('批次查询失败:', e);
+      }
+    }
+    
+    // 给所有关键词补默认值
+    for (const kw of kwList) {
+      const key = kw.toLowerCase();
+      if (!newData[key]) {
+        newData[key] = { search_vol: '—', competition: '—', market_cpc: '—', market_cpc_min: '—', market_cpc_max: '—' };
+      }
+    }
+    
+    sellerspriteData = newData;
+    
+    if (!quotaExhausted) {
+      const loaded = Object.keys(sellerspriteData).length;
+      $ssStatus.textContent = `卖家精灵 ${loaded}/${kwList.length}`;
+    }
+    renderTable();
+  } catch (e) {
+    console.error('卖家精灵查询失败:', e);
+    $ssStatus.textContent = '查询失败';
+    for (const kw of kwList) {
+      const key = kw.toLowerCase();
+      if (!sellerspriteData[key]) {
+        sellerspriteData[key] = { search_vol: '—', competition: '—', market_cpc: '—', market_cpc_min: '—', market_cpc_max: '—', purchases: '—', growth: '—', products: '—', supply_demand_ratio: '—', ara_click_rate: '—', avg_price: '—' };
+      }
+    }
+    renderTable();
+  }
+}
+
+// ================================================================
+// 事件绑定
+// ================================================================
+let _loadingPortfolio = false;
+let _loadingCampaign = false;
+
+$store.addEventListener('change', () => {
+  const sid = $store.value;
+  if (!sid) { $portfolio.innerHTML = '<option value="">— 全部组合 —</option>'; $campaign.innerHTML = '<option value="">— 选择活动 —</option>'; return; }
+  loadPortfolios(sid);
+  $campaign.innerHTML = '<option value="">— 选择活动 —</option>';
+});
+
+$portfolio.addEventListener('change', () => {
+  const sid = $store.value;
+  if (!sid) return;
+  const pid = $portfolio.value;
+  loadCampaigns(sid, pid || null);
+});
+
+$loadBtn.addEventListener('click', () => {
+  const sid = $store.value;
+  const cid = $campaign.value;
+  const days = $days.value;
+  if (!sid || !cid) { toast('请选择店铺和广告活动'); return; }
+  loadKeywords(sid, cid, days);
+});
+
+// ================================================================
+// 初始化
+// ================================================================
+loadStores();
+// ================================================================
+// 列宽管理（colgroup 方式，不与浏览器自动布局冲突）
+// ================================================================
+(function initColgroup() {
+  const colWidths = {
+    checkbox:    { min: 36, ideal: 36 },
+    keyword_text: { min: 80, ideal: 130, max: 160 },
+    match_type:  { min: 48, ideal: 50 },
+    state:       { min: 48, ideal: 50 },
+    bid:         { min: 55, ideal: 60 },
+    impressions: { min: 55, ideal: 60 },
+    clicks:      { min: 52, ideal: 55 },
+    ctr:         { min: 50, ideal: 52 },
+    cpc:         { min: 50, ideal: 55 },
+    cost:        { min: 55, ideal: 60 },
+    sales:       { min: 55, ideal: 65 },
+    acos:        { min: 50, ideal: 55 },
+    ss_search_vol: { min: 55, ideal: 65 },
+    ss_competition: { min: 55, ideal: 60 },
+    market_cpc:     { min: 55, ideal: 65 },
+    market_cpc_range: { min: 70, ideal: 85 },
+    ss_purchases: { min: 55, ideal: 65 },
+    ss_growth:   { min: 60, ideal: 72 },
+    ss_sdr:      { min: 50, ideal: 55 },
+    ss_ara_click:{ min: 60, ideal: 68 },
+    ss_products: { min: 55, ideal: 65 },
+    ss_avg_price:{ min: 55, ideal: 62 },
+    last_change: { min: 52, ideal: 60 },
+    actions:     { min: 140, ideal: 160 },
+  };
+  const colIds = ['checkbox','keyword_text','match_type','state','bid','impressions','clicks','ctr','cpc','cost','sales','acos','ss_search_vol','ss_competition','market_cpc','market_cpc_range','ss_purchases','ss_growth','ss_sdr','ss_ara_click','ss_products','ss_avg_price','last_change','actions'];  
+  const colgroup = document.createElement('colgroup');
+  colIds.forEach(id => {
+    const col = document.createElement('col');
+    const spec = colWidths[id];
+    col.dataset.colId = id;
+    col.style.width = (spec.ideal || spec.min) + 'px';
+    col.style.minWidth = spec.min + 'px';
+    colgroup.appendChild(col);
+  });
+  document.querySelector('.table-wrap table').insertBefore(colgroup, document.querySelector('.table-wrap table').firstChild);
+})();
+
+// ================================================================
+// 列宽拖拽调整（基于 colgroup，不影响其他列）
+// ================================================================
+document.querySelectorAll('#headerRow th').forEach(th => {
+  const resizer = document.createElement('div');
+  resizer.className = 'col-resizer';
+  th.appendChild(resizer);
+  let startX, startW;
+  function onMouseMove(e) {
+    const w = Math.max(40, startW + e.clientX - startX);
+    const cols = th.closest('table').rows[0].cells;
+    for (let i = 0; i < cols.length; i++) {
+      if (cols[i] === th) {
+        // 只修改 colgroup 中对应列的宽度，不改单元格 style
+        const colEl = document.querySelectorAll('colgroup col')[i];
+        if (colEl) {
+          colEl.style.width = w + 'px';
+          colEl.style.minWidth = w + 'px';
+        }
+        break;
+      }
+    }
+  }
+  function onMouseUp(e) {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    resizer.classList.remove('resizing');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+  resizer.addEventListener('mousedown', e => {
+    e.preventDefault();
+    startX = e.clientX;
+    startW = th.offsetWidth;
+    resizer.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+});
+
+// ================================================================
+// AI 分析
+// ================================================================
+
+/** 关闭AI模态框 */
+function closeAiModal(e) {
+  if (e && e.target !== e.currentTarget) return; // only overlay click
+  document.getElementById('aiModal').style.display = 'none';
+}
+
+/** 批量AI分析所有选中的关键词 */
+async function batchAIAnalyze() {
+  if (selectedIds.size === 0) { toast('请先选择关键词'); return; }
+  const selected = keywords.filter(k => selectedIds.has(k.keyword_id));
+  if (selected.length === 0) { toast('选中的关键词已不在当前列表'); return; }
+
+  const modal = document.getElementById('aiModal');
+  const title = document.getElementById('aiModalTitle');
+  const body = document.getElementById('aiModalBody');
+  modal.style.display = 'flex';
+  title.textContent = `🤖 批量分析 ${selected.length} 个关键词`;
+
+  // 构建请求：每个关键词带上 ssData 和当前竞价
+  const kwList = selected.map(kw => {
+    const kwText = (kw.keyword_text || '').toLowerCase();
+    const ss = sellerspriteData[kwText] || {};
+    return {
+      keyword_id: kw.keyword_id,
+      keyword_text: kw.keyword_text,
+      current_bid: kw.bid || 0,
+      target_type: kw.target_type || 'keyword',
+      marketplace: 'US',
+      ssData: ss
+    };
+  });
+
+  body.innerHTML = `<div class="ai-loading"><div class="spinner"></div><p>正在并行分析 ${selected.length} 个关键词（每次3个）...</p><div id="batchProgress" style="margin-top:8px;font-size:13px;color:#666"></div></div>`;
+
+  try {
+    const res = await fetch(BASE_PATH + '/api/keyword/batch-analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') },
+      body: JSON.stringify({
+        sid: $store.value,
+        campaign_id: $campaign.value,
+        keywords: kwList
+      })
+    });
+    const data = await res.json();
+    if (data.error) { body.innerHTML = `<p style="color:#d32f2f">批量分析失败: ${data.error}</p>`; return; }
+    if (!data.results || data.results.length === 0) { body.innerHTML = `<p style="color:#999">分析结果为空</p>`; return; }
+
+    // 按分数升序排（最差的在前）
+    data.results.sort((a, b) => a.score - b.score);
+
+    const scores = data.results.map(r => r.score);
+    const avg = (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(0);
+    const good = scores.filter(s => s >= 65).length;
+    const mid = scores.filter(s => s >= 50 && s < 65).length;
+    const bad = scores.filter(s => s < 50).length;
+
+    let html = `<div style="margin-bottom:12px;font-size:14px;color:#666">📊 共分析 ${data.results.length} 个关键词 · 平均 ${avg}/100 · ✅ ${good} · ➡️ ${mid} · ⚠️ ${bad}</div>`;
+
+    for (let i = 0; i < data.results.length; i++) {
+      const r = data.results[i];
+      const scoreColor = r.score >= 65 ? '#2e7d32' : (r.score >= 50 ? '#e65100' : '#d32f2f');
+      const scoreBg = scoreColor + '18';
+
+      html += `<div style="border:1px solid #e0e0e0;border-radius:8px;margin-bottom:10px;overflow:hidden">`;
+      // 标题栏
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fafafa;border-bottom:1px solid #eee;cursor:pointer" onclick="const el=this.nextElementSibling;el.style.display=el.style.display==='none'?'':'none';this.querySelector('.toggle-icon').textContent=el.style.display==='none'?'▶':'▼'">
+  <span style="font-weight:600;font-size:13px;color:#666">#${i+1}</span>
+  <span style="font-weight:600;font-size:14px">${r.keyword_text}</span>
+  <span style="margin-left:auto;font-weight:bold;font-size:16px;color:${scoreColor}">${r.score}</span>
+  <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${scoreBg};color:${scoreColor};font-weight:500">${r.score_label || ''}</span>
+  <span class="toggle-icon" style="font-size:12px;color:#999">▶</span>
+</div>`;
+
+      // 内容区（默认折叠，点击标题栏展开）
+      html += `<div style="padding:12px 14px;font-size:13px;line-height:1.7;display:none">`;
+
+      // 智能建议
+      html += `<div style="margin-bottom:8px;padding:8px 10px;background:#f0f7ff;border-radius:6px;border-left:3px solid #1565c0">${r.summary}</div>`;
+
+      // 广告表现 30d
+      const d30 = r.analysis_30d || {};
+      if (d30.impressions !== undefined) {
+        html += `<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:8px;font-size:12px;color:#666">`;
+        html += `<span>👁 展示 <strong>${d30.impressions.toLocaleString()}</strong></span>`;
+        html += `<span>🖱 点击 <strong>${d30.clicks.toLocaleString()}</strong></span>`;
+        if (d30.ctr) html += `<span>📊 CTR <strong>${d30.ctr.toFixed(1)}%</strong></span>`;
+        if (d30.cpc) html += `<span>💲 CPC <strong>$${d30.cpc.toFixed(2)}</strong></span>`;
+        if (d30.cost) html += `<span>💰 花费 <strong>$${d30.cost.toFixed(2)}</strong></span>`;
+        if (d30.sales >= 0) html += `<span>🛒 销量 <strong>$${d30.sales.toFixed(2)}</strong></span>`;
+        if (d30.acos >= 0) {
+          const acosColor = d30.acos < 20 ? '#2e7d32' : (d30.acos < 30 ? '#e65100' : '#d32f2f');
+          html += `<span>📉 ACOS <strong style="color:${acosColor}">${d30.acos.toFixed(1)}%</strong></span>`;
+        }
+        html += `</div>`;
+      }
+
+      // 当前竞价
+      html += `<div style="margin-bottom:8px;font-size:12px;color:#666">💰 当前竞价: <strong>$${(r.current_bid || 0).toFixed(2)}</strong></div>`;
+
+      // 建议列表
+      if (r.suggestions && r.suggestions.length > 0) {
+        html += `<div style="font-size:12px;color:#333"><strong>建议:</strong></div>`;
+        html += `<ul style="margin:4px 0 0 0;padding-left:18px;font-size:12px;line-height:1.8">`;
+        for (const sug of r.suggestions) {
+          html += `<li style="color:#555">${sug}</li>`;
+        }
+        html += `</ul>`;
+      }
+
+      // 详细分析
+      if (r.details && r.details.length > 0) {
+        html += `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e0e0e0;font-size:12px;color:#888"><strong>详细分析:</strong></div>`;
+        for (const d of r.details) {
+          const formatted = d.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+          html += `<div style="font-size:12px;color:#888;padding:2px 0">• ${formatted}</div>`;
+        }
+      }
+
+      html += `</div></div>`;
+    }
+
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<p style="color:#d32f2f">批量分析请求失败: ${e.message}</p>`;
+  }
+}
+
+/** 触发AI分析 */
+async function analyzeKeyword(keywordId, keywordText, targetType) {
+  const modal = document.getElementById('aiModal');
+  const title = document.getElementById('aiModalTitle');
+  const body = document.getElementById('aiModalBody');
+  modal.style.display = 'flex';
+  title.textContent = `🤖 AI 分析: ${keywordText}`;
+  body.innerHTML = `<div class="ai-loading"><div class="spinner"></div><p>正在拉取市场数据、广告表现，生成综合分析...</p></div>`;
+
+  try {
+    // 从当前表格数据中找到该关键词
+    const allKws = window.__allKeywords || keywords;
+    const kw = allKws.find(k => k.keyword_id === keywordId);
+    const currentBid = kw ? kw.bid : 0;
+
+    const res = await fetch(BASE_PATH + '/api/keyword/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') },
+      body: JSON.stringify({
+        sid: $store.value,
+        campaign_id: $campaign.value,
+        keyword_id: keywordId,
+        keyword_text: keywordText,
+        marketplace: 'US',
+        target_type: targetType,
+        current_bid: currentBid,
+        profile_id: 0
+      })
+    });
+    const data = await res.json();
+    if (data.error) { body.innerHTML = `<p style="color:#d32f2f">分析失败: ${data.error}</p>`; return; }
+
+    // 渲染分析结果
+    let html = '';
+
+    // 摘要
+    html += `<div class="summary-box"><strong>🧠 智能建议</strong><br>${data.summary}</div>`;
+
+    // 卖家精灵市场数据 — 全维度展示
+    if (data.sellersprite && data.sellersprite.search_vol !== '—') {
+      const ss = data.sellersprite;
+      html += `<div class="analysis-section"><h4>🔍 卖家精灵市场数据</h4>`;
+      html += `<div class="item">📈 搜索量: <strong>${Number(ss.search_vol).toLocaleString()}</strong>${ss.growth != null && ss.growth !== '—' ? ` <span style="color:${ss.growth > 0 ? '#2e7d32' : '#d32f2f'}">(${ss.growth > 0 ? '↑' : '↓'}${Math.abs(Number(ss.growth)).toFixed(1)}%)</span>` : ''}</div>`;
+      if (ss.search_monthly_cr != null && ss.search_monthly_cr !== '—') {
+        html += `<div class="item">📅 月环比: <strong>${Number(ss.search_monthly_cr).toFixed(1)}%</strong> | 近7天: <strong>${ss.search_nearly_cr != null && ss.search_nearly_cr !== '—' ? Number(ss.search_nearly_cr).toFixed(1) + '%' : '—'}</strong></div>`;
+      }
+      html += `<div class="item">🎯 购买率: <strong>${ss.purchase_rate !== '—' ? (Number(ss.purchase_rate) * 100).toFixed(1) + '%' : '—'}</strong> | 市场周期: ${ss.market_period || '—'}</div>`;
+      html += `<div class="item">⚔️ 竞争产品: <strong>${ss.products !== '—' ? Number(ss.products).toLocaleString() : '—'}个</strong> | 供需比: <strong>${ss.supply_demand_ratio != null && ss.supply_demand_ratio !== '—' ? Number(ss.supply_demand_ratio).toFixed(2) : '—'}</strong></div>`;
+      html += `<div class="item">💰 市场CPC: <strong>$${ss.market_cpc}</strong>`;
+      if (ss.bid_min !== '—') {
+        html += ` | 竞价范围: <strong>$${ss.bid_min} ~ $${ss.bid_max}</strong>`;
+      }
+      html += `</div>`;
+      if (ss.avg_price !== '—') {
+        html += `<div class="item">🏷️ 均价: <strong>$${ss.avg_price}</strong> | 评分: <strong>${ss.avg_rating}★</strong> (${ss.avg_ratings}评)</div>`;
+      }
+      if (ss.brands && ss.brands.length > 0) {
+        html += `<div class="item">🏪 品牌分布: <strong>${ss.brands.slice(0, 6).join('、')}</strong></div>`;
+      }
+      if (ss.num_competing_asins > 0) {
+        html += `<div class="item">👀 广告竞品ASIN: <strong>${ss.num_competing_asins}个</strong></div>`;
+      }
+      if (ss.title_density_exact > 0) {
+        html += `<div class="item">📋 标题含该词: <strong>${ss.title_density_exact}个产品</strong></div>`;
+      }
+      if (ss.keyword_cn && ss.keyword_cn !== '—') {
+        html += `<div class="item">🌐 中文: <strong>${ss.keyword_cn}</strong></div>`;
+      }
+      html += `</div>`;
+    }
+
+    // 广告表现
+    for (const [label, rep] of [['近30天', data.analysis_30d], ['近60天', data.analysis_60d]]) {
+      html += `<div class="analysis-section"><h4>📆 ${label} 广告表现</h4>`;
+      html += `<div class="item">👁 展示量: <strong>${rep.impressions.toLocaleString()}</strong></div>`;
+      html += `<div class="item">🖱 点击量: <strong>${rep.clicks.toLocaleString()}</strong></div>`;
+      html += `<div class="item">📊 CTR: <strong>${rep.ctr.toFixed(1)}%</strong></div>`;
+      html += `<div class="item">💲 CPC: <strong>$${rep.cpc.toFixed(2)}</strong></div>`;
+      html += `<div class="item">💰 花费: <strong>$${rep.cost.toFixed(2)}</strong></div>`;
+      html += `<div class="item">🛒 销售额: <strong>$${rep.sales.toFixed(2)}</strong></div>`;
+      const acosColor = rep.acos < 20 ? '#2e7d32' : (rep.acos < 30 ? '#e65100' : '#d32f2f');
+      html += `<div class="item">📉 ACOS: <strong style="color:${acosColor}">${rep.acos.toFixed(1)}%</strong></div>`;
+      html += `</div>`;
+    }
+
+    // 评分徽章
+    if (data.score !== undefined) {
+      const scoreColor = data.score >= 65 ? '#2e7d32' : (data.score >= 50 ? '#e65100' : '#d32f2f');
+      html += `<div style="text-align:center;margin:12px 0;padding:12px;border-radius:8px;background:#f5f5f5">`;
+      html += `<span style="font-size:24px;font-weight:bold;color:${scoreColor}">${data.score}/100</span>`;
+      html += ` &nbsp; <span style="font-size:16px;color:${scoreColor}">${data.score_label || ''}</span>`;
+      html += `</div>`;
+    }
+
+    // AI分析详情（支持markdown加粗）
+    if (data.details && data.details.length > 0) {
+      html += `<div class="analysis-section"><h4>📋 详细分析</h4>`;
+      for (const d of data.details) {
+        // 替换 **text** 为 <strong>text</strong>
+        const formatted = d.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        html += `<div class="item bull">${formatted}</div>`;
+      }
+      html += `</div>`;
+    }
+
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<p style="color:#d32f2f">请求失败: ${e.message}</p>`;
+  }
+}
+
+// ================================================================
+// 登录认证
+// ================================================================
+
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('logoutBtn').style.display = 'none';
+  document.getElementById('loginUserDisplay').style.display = 'none';
+  setTimeout(() => document.getElementById('loginPass').focus(), 100);
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = '';
+  document.getElementById('loginUserDisplay').style.display = '';
+}
+
+async function handleLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const $error = document.getElementById('loginError');
+  const $btn = document.getElementById('loginBtn');
+  $error.textContent = '';
+  if (!username || !password) { $error.textContent = '请输入用户名和密码'; return; }
+  $btn.disabled = true;
+  $btn.textContent = '登录中...';
+  try {
+    const res = await fetch(BASE_PATH + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('auth_user', data.username);
+      document.getElementById('loginUserDisplay').textContent = '👤 ' + data.username;
+      hideLogin();
+      document.getElementById('loginPass').value = '';
+      // 重新加载当前数据
+      const sid = $store.value;
+      const cid = $campaign.value;
+      if (sid && cid) loadKeywords(sid, cid, 7);
+    } else {
+      $error.textContent = data.error || '登录失败';
+    }
+  } catch (e) {
+    $error.textContent = '网络错误: ' + e.message;
+  } finally {
+    $btn.disabled = false;
+    $btn.textContent = '登 录';
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+  // 清空表格数据
+  keywords = [];
+  sellerspriteData = {};
+  window.__allKeywords = [];
+  renderTable();
+  showLogin();
+}
+
+// 回车键触发登录
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginOverlay').style.display === 'flex') {
+    handleLogin();
+  }
+});
+
+// 页面加载时检查登录状态
+(async function checkAuth() {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    try {
+      const res = await fetch(BASE_PATH + '/api/auth/verify', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (data.valid) {
+        document.getElementById('loginUserDisplay').textContent = '👤 ' + data.username;
+        document.getElementById('logoutBtn').style.display = '';
+        document.getElementById('loginUserDisplay').style.display = '';
+        return;
+      }
+    } catch (e) {}
+  }
+  showLogin();
+})();
+
+</script>
+
+<!-- ================================================================ -->
+<!-- 页脚 -->
+<!-- ================================================================ -->
+<div class="site-footer">© 2026 广东吉米智能科技有限公司</div>
+
+<!-- ================================================================ -->
+<!-- AI分析模态框 -->
+<!-- ================================================================ -->
+<div id="aiModal" class="modal-overlay" style="display:none" onclick="closeAiModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span id="aiModalTitle">🤖 AI 关键词分析</span>
+      <button class="modal-close" onclick="closeAiModal()">✕</button>
+    </div>
+    <div id="aiModalBody" class="modal-body">
+      <div class="ai-loading">
+        <div class="spinner"></div>
+        <p>正在分析关键词数据，请稍候...</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeAiModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal-overlay {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.45); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+}
+.modal-box {
+  background:#fff; border-radius:12px;
+  width:820px; min-width:500px; min-height:300px;
+  max-width:none; max-height:none;
+  display:flex; flex-direction:column;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  resize:both; overflow:auto;
+}
+/* 右下角拖拽手柄样式 */
+.modal-box::-webkit-resizer { border-width:12px; border-style:solid; border-color:transparent #bbb #bbb transparent; border-radius:0 0 12px 0; }
+.modal-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 20px; border-bottom:1px solid #e0e0e0;
+  font-weight:600; font-size:16px;
+}
+.modal-close {
+  background:none; border:none; font-size:18px; cursor:pointer;
+  color:#888; padding:0 4px;
+}
+.modal-close:hover { color:#333; }
+.modal-body {
+  padding:20px; overflow-y:auto; flex:1;
+  font-size:14px; line-height:1.7;
+}
+.modal-footer {
+  padding:12px 20px; border-top:1px solid #e0e0e0;
+  text-align:right;
+}
+.ai-loading {
+  text-align:center; padding:40px 20px; color:#888;
+}
+.spinner {
+  width:32px; height:32px; border:3px solid #e0e0e0;
+  border-top-color:#9c27b0; border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:0 auto 12px;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.analysis-section { margin-bottom:16px; }
+.analysis-section h4 {
+  font-size:14px; font-weight:600; margin:0 0 8px 0;
+  padding-bottom:4px; border-bottom:1px solid #eee;
+  color:#333;
+}
+.analysis-section .item {
+  padding:4px 0; color:#555; font-size:13px;
+}
+.analysis-section .item.bull {
+  padding-left:16px;
+}
+.summary-box {
+  background:#f3e5f5; border-radius:8px; padding:12px 16px;
+  margin-top:12px; font-size:13px; line-height:1.6; color:#4a148c;
+  white-space:pre-line;
+}
+.summary-box strong { color:#7b1fa2; }
+</style>
+
+</body>
+</html>

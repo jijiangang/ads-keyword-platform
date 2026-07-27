@@ -1,0 +1,28 @@
+services:
+  ads-keyword:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ads-keyword
+    restart: unless-stopped
+    ports:
+      - "18444:18444"
+    volumes:
+      - ads-keyword-data:/app/data
+      - ads-keyword-cache:/app/cache
+    environment:
+      - PORT=18444
+      - DB_PATH=/app/data/ads.db
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:18444/api/auth/verify"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  ads-keyword-data:
+    name: ads-keyword-data
+  ads-keyword-cache:
+    name: ads-keyword-cache
