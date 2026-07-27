@@ -966,6 +966,135 @@ async function handleAPI(req, res, parts) {
     }
     }
 
+    // === AI 关键词分析（调大模型）===
+    if (parts[0] === 'keyword' && parts[1] === 'analyze' && method === 'POST') {
+      try {
+        const user = authMiddleware(req, res);
+        if (!user) return;
+        const body = await readBody();
+        const { sid, campaign_id, keyword_id, keyword_text, marketplace, target_type, current_bid, profile_id } = body;
+        if (!sid || !keyword_id || !keyword_text) return sendError(res, '缺少参数');
+
+        // 拉取卖家精灵市场数据
+        let ssData = {};
+        try {
+          const ssRes = await callSellerspriteTool('keyword_research_trends', {
+            keyword: keyword_text, marketplace: marketplace || 'US'
+          });
+          const text = ssRes?.result?.content?.[0]?.text || '{}';
+          if (!text.includes('ERROR_UNAUTHORIZED')) {
+            const items = JSON.parse(text)?.data || [];
+            if (items.length > 0) {
+              const latest = items[items.length - 1];
+              ssData = {
+                search_vol: latest.search || 0,
+                purchase_rate: latest.purchaseRate || 0,
+                growth: latest.yearlyGrowth || 0
+              };
+            }
+          }
+        } catch (e) {}
+
+        // 拉取近30天广告报告
+        let report30 = { impressions: 0, clicks: 0, cost: 0, sales: 0 };
+        try {
+          const now = new Date();
+          const start30 = new Date(now); start30.setDate(start30.getDate() - 30);
+          for (let d = new Date(start30); d <= now; d.setDate(d.getDate() + 1)) {
+            const dateStr = fmtDate(d);
+            const r = await callLingXingApi('/pb/openapi/newad/spKeywordReports', 'POST', {
+              sid, keyword_id, report_date: dateStr
+            });
+            const rows = r.data || [];
+            for (const row of Array.isArray(rows) ? rows : []) {
+              report30.impressions += row.impressions || 0;
+              report30.clicks += row.clicks || 0;
+              report30.cost += row.cost || 0;
+              report30.sales += row.sales || 0;
+            }
+          }
+        } catch (e) {}
+
+        // 读取 AI 配置
+        const provider = getConfig('ai_llm_provider', 'deepseek');
+        const apiKey = getConfig('ai_llm_api_key', '');
+        const baseUrl = getConfig('ai_llm_base_url', 'https://api.deepseek.com');
+        const model = getConfig('ai_llm_model', 'deepseek-chat');
+
+        if (!apiKey) {
+          return sendJSON(res, { error: '请在设置页配置 AI 大模型 API Key' }, 400);
+        }
+
+        // 构建 prompt
+        const prompt = `你是一个专业的亚马逊PPC广告分析师。请根据以下数据对一个关键词进行综合分析，给出评分(0-100)、优化建议和风险评估。
+
+关键词: "${keyword_text}"
+目标市场: ${marketplace || 'US'}
+
+--- 卖家精灵市场数据 ---
+搜索量: ${ssData.search_vol || 'N/A'}
+购买率: ${ssData.purchase_rate ? (ssData.purchase_rate * 100).toFixed(1) + '%' : 'N/A'}
+年增长率: ${ssData.growth != null ? ssData.growth + '%' : 'N/A'}
+
+--- 近30天广告表现 ---
+展示量: ${report30.impressions}
+点击量: ${report30.clicks}
+花费: $${report30.cost.toFixed(2)}
+销售额: $${report30.sales.toFixed(2)}
+当前竞价: $${(current_bid || 0).toFixed(2)}
+
+请按以下格式返回JSON（不要返回任何其他文字）：
+{
+  "score": 数字(0-100),
+  "score_label": "简短评级",
+  "summary": "一句话建议(20字内)",
+  "details": ["分析点1", "分析点2", "分析点3", "分析点4", "分析点5"],
+  "suggestions": ["建议1", "建议2", "建议3"]
+}`;
+
+        // 调用 DeepSeek API
+        const aiRes = await fetch((baseUrl.replace(/\/+$/, '')) + '/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+            max_tokens: 2048
+          })
+        });
+
+        if (!aiRes.ok) {
+          const errText = await aiRes.text();
+          return sendJSON(res, { error: 'AI API 调用失败: ' + (errText.slice(0, 200)) }, 502);
+        }
+
+        const aiJson = await aiRes.json();
+        const content = aiJson?.choices?.[0]?.message?.content || '';
+
+        let result;
+        try {
+          const cleaned = content.replace(/^\s*\\`\\`\\`(?:json)?\s*|\s*\\`\\`\\`\s*$/g, '');
+          result = JSON.parse(cleaned);
+        } catch (e) {
+          return sendJSON(res, { error: 'AI 返回格式异常', raw: content.slice(0, 500) }, 502);
+        }
+
+        return sendJSON(res, {
+          ...result,
+          sellersprite: ssData,
+          analysis_30d: report30,
+          current_bid: current_bid || 0
+        });
+      } catch (e) {
+        console.error('AI analyze error:', e.message, e.stack);
+        return sendJSON(res, { error: 'AI分析异常: ' + e.message }, 500);
+      }
+    }
+
     // === 卖家精灵关键词市场数据 ===
     if (parts[0] === 'sellersprite' && parts[1] === 'keyword' && method === 'GET') {
       if (!query.keyword) return sendError(res, '缺少 keyword 参数');
