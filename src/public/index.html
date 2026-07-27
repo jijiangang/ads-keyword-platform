@@ -1860,8 +1860,8 @@ async function loadUsers() {
         <td><span style="color:${u.role === 'admin' ? '#d32f2f' : '#1565c0'}">${u.role === 'admin' ? '管理员' : '普通用户'}</span></td>
         <td>${u.is_active ? '&#9989; 启用' : '&#9940; 停用'}</td>
         <td>
-          <button class="btn-sm btn-edit" onclick="editUser(${u.id}, '${u.username}', '${u.nick_name || ''}', '${u.role}')">&#9998;&#65039;</button>
-          ${u.role !== 'admin' ? '<button class="btn-sm btn-danger" onclick="deleteUser(' + u.id + ', \'' + u.username + '\')">&#128465;&#65039;</button>' : ''}
+          <button class="btn-sm btn-edit" data-userid="${u.id}" data-username="${u.username.replace(/'/g, '\\u0027')}" data-nickname="${(u.nick_name||'').replace(/'/g, '\\u0027')}" data-role="${u.role}" onclick="editUser(this.dataset.userid, this.dataset.username, this.dataset.nickname, this.dataset.role)">&#9998;&#65039;</button>
+          ${u.role !== 'admin' ? '<button class="btn-sm btn-danger" data-userid="'+u.id+'" data-username="'+u.username.replace(/'/g, '\\u0027')+'" onclick="deleteUser(this.dataset.userid, this.dataset.username)">&#128465;&#65039;</button>' : ''}
         </td>
       </tr>`
     ).join('');
