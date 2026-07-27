@@ -995,32 +995,37 @@ async function handleAPI(req, res, parts) {
           }
         } catch (e) {}
 
-        // 拉取近30天广告报告
+        // 拉取近30天和近60天广告报告（并行）
         let report30 = { impressions: 0, clicks: 0, cost: 0, sales: 0, ctr: 0, cpc: 0, acos: 0 };
+        let report60 = { impressions: 0, clicks: 0, cost: 0, sales: 0, ctr: 0, cpc: 0, acos: 0 };
         try {
           const now = new Date();
-          const start30 = new Date(now); start30.setDate(start30.getDate() - 30);
-          for (let d = new Date(start30); d <= now; d.setDate(d.getDate() + 1)) {
-            const dateStr = fmtDate(d);
-            const r = await callLingXingApi('/pb/openapi/newad/spKeywordReports', 'POST', {
-              sid, keyword_id, report_date: dateStr
-            });
-            const rows = r.data || [];
-            for (const row of Array.isArray(rows) ? rows : []) {
-              report30.impressions += row.impressions || 0;
-              report30.clicks += row.clicks || 0;
-              report30.cost += row.cost || 0;
-              report30.sales += row.sales || 0;
+          const dayReports = await Promise.all([30, 60].map(async (days) => {
+            const start = new Date(now); start.setDate(start.getDate() - days);
+            let acc = { impressions: 0, clicks: 0, cost: 0, sales: 0 };
+            for (let d = new Date(start); d <= now; d.setDate(d.getDate() + 1)) {
+              const dateStr = fmtDate(d);
+              const r = await callLingXingApi('/pb/openapi/newad/spKeywordReports', 'POST', {
+                sid, keyword_id, report_date: dateStr
+              });
+              const rows = r.data || [];
+              for (const row of Array.isArray(rows) ? rows : []) {
+                acc.impressions += row.impressions || 0;
+                acc.clicks += row.clicks || 0;
+                acc.cost += row.cost || 0;
+                acc.sales += row.sales || 0;
+              }
             }
-          }
-          // 计算派生字段
-          if (report30.clicks > 0) {
-            report30.ctr = (report30.clicks / Math.max(report30.impressions, 1)) * 100;
-            report30.cpc = report30.cost / report30.clicks;
-          }
-          if (report30.sales > 0) {
-            report30.acos = (report30.cost / report30.sales) * 100;
-          }
+            return acc;
+          }));
+          const d30 = dayReports[0], d60 = dayReports[1];
+          report30 = d30; report60 = d60;
+          report30.ctr = d30.impressions > 0 ? d30.clicks / d30.impressions * 100 : 0;
+          report30.cpc = d30.clicks > 0 ? d30.cost / d30.clicks : 0;
+          report30.acos = d30.sales > 0 ? d30.cost / d30.sales * 100 : 0;
+          report60.ctr = d60.impressions > 0 ? d60.clicks / d60.impressions * 100 : 0;
+          report60.cpc = d60.clicks > 0 ? d60.cost / d60.clicks : 0;
+          report60.acos = d60.sales > 0 ? d60.cost / d60.sales * 100 : 0;
         } catch (e) {}
 
         // 读取 AI 配置
@@ -1050,6 +1055,15 @@ async function handleAPI(req, res, parts) {
 花费: $${report30.cost.toFixed(2)}
 销售额: $${report30.sales.toFixed(2)}
 当前竞价: $${(current_bid || 0).toFixed(2)}
+
+--- 近60天广告表现 ---
+展示量: ${report60.impressions}
+点击量: ${report60.clicks}
+CTR: ${report60.ctr.toFixed(1)}%
+CPC: $${report60.cpc.toFixed(2)}
+花费: $${report60.cost.toFixed(2)}
+销售额: $${report60.sales.toFixed(2)}
+ACOS: ${report60.acos.toFixed(1)}%
 
 请按以下格式返回JSON（不要返回任何其他文字）：
 {
@@ -1095,7 +1109,7 @@ async function handleAPI(req, res, parts) {
           ...result,
           sellersprite: ssData,
           analysis_30d: report30,
-          analysis_60d: report30,
+          analysis_60d: report60,
           current_bid: current_bid || 0
         });
       } catch (e) {
