@@ -52,6 +52,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const CryptoJS = require('crypto-js');
+const md5 = require('md5');
+const qs = require('qs');
 
 // 分析引擎（懒加载）
 let analyzeKeyword = null;
@@ -151,27 +154,61 @@ async function getLingXingToken() {
   throw new Error('领星认证失败: ' + (data.msg || data.message || JSON.stringify(data)));
 }
 
-async function callLingXingApi(endpoint, method = 'GET', body = null) {
+function isPlainObject(val) {
+  return Object.prototype.toString.call(val) === '[object Object]' || Array.isArray(val);
+}
+
+function generateSign(params, appKey) {
+  const sortedKeys = Object.keys(params).sort();
+  const stringArr = sortedKeys.map(key => {
+    const value = isPlainObject(params[key]) ? JSON.stringify(params[key]) : String(params[key]);
+    return `${key}=${value}`;
+  });
+  const joined = stringArr.join('&');
+  const md5Upper = md5(joined).toString().toUpperCase();
+  const _key = CryptoJS.enc.Utf8.parse(appKey);
+  const encrypted = CryptoJS.AES.encrypt(md5Upper.trim(), _key, {
+    mode: CryptoJS.mode.ECB,
+    padding: CryptoJS.pad.Pkcs7
+  });
+  return encrypted.toString();
+}
+
+async function callLingXingApi(path, method, bizParams = {}) {
   const token = await getLingXingToken();
-  const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
-  const url = 'https://openapi.lingxing.com' + endpoint;
-  
+  const appKey = getConfig('lingxing_app_id', '');
+  const timestamp = Math.floor(Date.now() / 1000);
+  const baseParams = { access_token: token, app_key: appKey, timestamp };
+  const signAll = { ...baseParams, ...bizParams };
+  const sign = generateSign(signAll, appKey);
+  baseParams.sign = sign;
+
+  const fullUrl = `https://openapi.lingxing.com${path}`;
+  let url, options;
+
+  if (method === 'GET') {
+    const allQuery = { ...baseParams, ...bizParams };
+    url = `${fullUrl}?${qs.stringify(allQuery)}`;
+    options = { method: 'GET' };
+  } else {
+    url = `${fullUrl}?${qs.stringify(baseParams)}`;
+    options = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bizParams) };
+  }
+
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
-  
+  const timer = setTimeout(() => controller.abort(), 30000);
+  options.signal = controller.signal;
   try {
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal
-    });
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error(`领星API HTTP ${res.status}`);
+    const json = await res.json();
+    // 成功码兼容：auth(code=200)、常规API(code=0)、listing/publish(code=1)
+    if (String(json.code) !== '200' && json.code !== 0 && String(json.code) !== '0' && json.code !== 1) {
+      throw new Error(`领星API错误: ${json.msg || json.message || JSON.stringify(json)}`);
+    }
+    return json;
+  } finally {
     clearTimeout(timer);
-    return await res.json();
-  } catch (e) {
-    clearTimeout(timer);
-    if (e.name === 'AbortError') throw new Error('领星API超时(15s)');
-    throw e;
   }
 }
 
