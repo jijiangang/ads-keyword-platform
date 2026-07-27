@@ -126,17 +126,29 @@ async function getLingXingToken() {
   const appSecret = getConfig('lingxing_app_secret', '');
   if (!appId || !appSecret) throw new Error('领星APP ID或Secret未配置');
   
-  const res = await fetch('https://openapi.lingxing.com/api/auth-server/oauth/access/token', {
+  // 参考生产版 ads-web-backend/server.js 的领星 token 获取方式
+  const params = new URLSearchParams();
+  params.append('appId', appId);
+  params.append('appSecret', appSecret);
+  const res = await fetch('https://openapi.lingxing.com/api/auth-server/oauth/access-token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ app_id: appId, app_secret: appSecret, grant_type: 'client_credentials' })
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params
   });
   const data = await res.json();
-  if (data.code === 0 && data.data?.access_token) {
-    lingxingTokenCache = { token: data.data.access_token, expiry: Date.now() + data.data.expires_in * 1000 };
+  if (data.code === 0 || data.code === '0' || String(data.code) === '0') {
+    lingxingTokenCache = { token: data.data.access_token, expiry: Date.now() + (data.data.expires_in || 7200) * 1000 };
     return data.data.access_token;
   }
-  throw new Error('领星认证失败: ' + (data.message || JSON.stringify(data)));
+  // 兼容新版领星（返回200表示成功）
+  if (String(data.code) === '200' || String(data.code) === '0') {
+    const token = data.data?.access_token || data.data?.token;
+    if (token) {
+      lingxingTokenCache = { token, expiry: Date.now() + (data.data.expires_in || 7200) * 1000 };
+      return token;
+    }
+  }
+  throw new Error('领星认证失败: ' + (data.msg || data.message || JSON.stringify(data)));
 }
 
 async function callLingXingApi(endpoint, method = 'GET', body = null) {
