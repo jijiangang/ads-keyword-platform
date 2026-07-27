@@ -93,6 +93,30 @@ async function initDatabase() {
     )
   `);
   
+  // 用户表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      nick_name TEXT DEFAULT '',
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  
+  // 如果users表为空，创建默认管理员
+  const stmt = db.prepare('SELECT COUNT(*) as cnt FROM users');
+  stmt.step();
+  const countResult = stmt.getAsObject();
+  stmt.free();
+  if (countResult.cnt === 0 || countResult.cnt === '0') {
+    db.run('INSERT INTO users (username, password, role, nick_name) VALUES (?, ?, ?, ?)',
+      ['admin', 'admin888', 'admin', '管理员']);
+    console.log('[DB] 默认管理员已创建 (admin/admin888)');
+  }
+  
   // 持久化
   persistDb();
   return db;
@@ -222,6 +246,64 @@ function cleanSSCache() {
   persistDb();
 }
 
+// ==================== 用户管理 ====================
+
+function getUsers() {
+  const stmt = db.prepare('SELECT id, username, role, nick_name, is_active, created_at FROM users ORDER BY id');
+  const results = [];
+  while (stmt.step()) {
+    results.push(stmt.getAsObject());
+  }
+  stmt.free();
+  return results;
+}
+
+function getUserByUsername(username) {
+  const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
+  stmt.bind([username]);
+  if (stmt.step()) {
+    const row = stmt.getAsObject();
+    stmt.free();
+    return row;
+  }
+  stmt.free();
+  return null;
+}
+
+function createUser({ username, password, role, nick_name }) {
+  try {
+    db.run('INSERT INTO users (username, password, role, nick_name) VALUES (?, ?, ?, ?)',
+      [username, password, role || 'user', nick_name || username]);
+    persistDb();
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function updateUser(id, { password, role, nick_name, is_active }) {
+  try {
+    const updates = [];
+    const params = [];
+    if (password !== undefined) { updates.push('password = ?'); params.push(password); }
+    if (role !== undefined) { updates.push('role = ?'); params.push(role); }
+    if (nick_name !== undefined) { updates.push('nick_name = ?'); params.push(nick_name); }
+    if (is_active !== undefined) { updates.push('is_active = ?'); params.push(is_active); }
+    if (updates.length === 0) return { success: true };
+    params.push(id);
+    db.run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+    persistDb();
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function deleteUser(id) {
+  db.run('DELETE FROM users WHERE id = ? AND role != ?', [id, 'admin']);
+  persistDb();
+}
+
 // ==================== 导出 ====================
 module.exports = {
   initDatabase,
@@ -238,4 +320,9 @@ module.exports = {
   getSSCache,
   setSSCache,
   cleanSSCache,
+  getUsers,
+  getUserByUsername,
+  createUser,
+  updateUser,
+  deleteUser,
 };

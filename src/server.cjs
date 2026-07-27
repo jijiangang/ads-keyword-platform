@@ -279,8 +279,8 @@ async function handleAPI(req, res, parts) {
       const configObj = {};
       allConfig.forEach(c => { configObj[c.key] = c.value; });
       // 隐藏敏感字段
-      delete configObj.auth_secret;
-      delete configObj.lingxing_app_secret;
+      const SENSITIVE_KEYS = ['auth_secret', 'lingxing_app_secret', 'ai_llm_api_key'];
+      SENSITIVE_KEYS.forEach(k => delete configObj[k]);
       if (configObj.admin_password) configObj.admin_password = '********';
       return sendJSON(res, { settings: configObj });
     }
@@ -288,19 +288,70 @@ async function handleAPI(req, res, parts) {
       const user = authMiddleware(req, res);
       if (!user) return;
       const body = await readBody();
+      const ALLOWED_KEYS = [
+        'port', 'lingxing_app_id', 'lingxing_app_secret', 'sellersprite_secret',
+        'auth_secret', 'wecom_webhook_url', 'memory_limit_mb',
+        // 大模型配置
+        'ai_llm_provider', 'ai_llm_api_key', 'ai_llm_base_url', 'ai_llm_model'
+      ];
       for (const [key, value] of Object.entries(body)) {
-        if (['admin_user', 'admin_password', 'port', 'lingxing_app_id', 'lingxing_app_secret', 'sellersprite_secret', 'auth_secret', 'wecom_webhook_url', 'memory_limit_mb'].includes(key)) {
+        if (ALLOWED_KEYS.includes(key)) {
           setConfig(key, value);
         }
       }
-      // 如果修改了密码，立即更新内存中的值
-      if (body.admin_password && body.admin_password !== '********') {
-        ADMIN_PASSWORD = body.admin_password;
-      }
-      if (body.admin_user) ADMIN_USER = body.admin_user;
       if (body.port) PORT = parseInt(body.port);
       if (body.wecom_webhook_url) WECOM_WEBHOOK_URL = body.wecom_webhook_url;
       if (body.sellersprite_secret) SELLERSPRITE_SECRET = body.sellersprite_secret;
+      return sendJSON(res, { success: true });
+    }
+    
+    // === 用户管理（仅admin）===
+    if (parts[0] === 'users' && method === 'GET') {
+      const user = authMiddleware(req, res);
+      if (!user) return;
+      // 验证是admin
+      const u = db.getUserByUsername(user.username);
+      if (!u || u.role !== 'admin') return sendError(res, '无权限', 403);
+      const users = db.getUsers();
+      return sendJSON(res, { users });
+    }
+    if (parts[0] === 'users' && parts[1] === 'create' && method === 'POST') {
+      const user = authMiddleware(req, res);
+      if (!user) return;
+      const u = db.getUserByUsername(user.username);
+      if (!u || u.role !== 'admin') return sendError(res, '无权限', 403);
+      const body = await readBody();
+      if (!body.username || !body.password) return sendError(res, '用户名和密码必填');
+      const result = db.createUser({
+        username: body.username,
+        password: body.password,
+        role: body.role || 'user',
+        nick_name: body.nick_name || body.username
+      });
+      return sendJSON(res, result);
+    }
+    if (parts[0] === 'users' && parts[1] && parts[2] === 'update' && method === 'POST') {
+      const user = authMiddleware(req, res);
+      if (!user) return;
+      const u = db.getUserByUsername(user.username);
+      if (!u || u.role !== 'admin') return sendError(res, '无权限', 403);
+      const body = await readBody();
+      const id = parseInt(parts[1]);
+      db.updateUser(id, {
+        password: body.password || undefined,
+        role: body.role || undefined,
+        nick_name: body.nick_name || undefined,
+        is_active: body.is_active !== undefined ? (body.is_active ? 1 : 0) : undefined
+      });
+      return sendJSON(res, { success: true });
+    }
+    if (parts[0] === 'users' && parts[1] && parts[2] === 'delete' && method === 'POST') {
+      const user = authMiddleware(req, res);
+      if (!user) return;
+      const u = db.getUserByUsername(user.username);
+      if (!u || u.role !== 'admin') return sendError(res, '无权限', 403);
+      const id = parseInt(parts[1]);
+      db.deleteUser(id);
       return sendJSON(res, { success: true });
     }
 
@@ -324,12 +375,16 @@ async function handleAPI(req, res, parts) {
     // === 登录认证 ===
     if (parts[0] === 'auth' && parts[1] === 'login' && method === 'POST') {
       const body = await readBody();
-      console.log('[AUTH] login attempt:', body.username, '| pw length:', body.password?.length, '| pw starts with:', body.password?.substring(0, 2));
-      const pwMatch = body.password === ADMIN_PASSWORD;
-      console.log('[AUTH] password match:', pwMatch, '| ADMIN_PASSWORD length:', ADMIN_PASSWORD.length);
-      if (body.username === ADMIN_USER && pwMatch) {
+      // 从users表验证
+      const user = db.getUserByUsername(body.username);
+      if (user && user.password === body.password && user.is_active) {
         const token = generateToken(body.username);
-        return sendJSON(res, { token, username: body.username });
+        return sendJSON(res, { token, username: body.username, role: user.role, nick_name: user.nick_name });
+      }
+      // 兼容旧的 system_config 方式（降级）
+      if (body.username === ADMIN_USER && body.password === ADMIN_PASSWORD) {
+        const token = generateToken(body.username);
+        return sendJSON(res, { token, username: body.username, role: 'admin' });
       }
       return sendJSON(res, { error: '用户名或密码错误' }, 401);
     }

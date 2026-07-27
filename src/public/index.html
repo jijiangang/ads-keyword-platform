@@ -132,6 +132,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-ai { background:transparent; color:#9c27b0; border:1px solid #ce93d8; padding:0 4px; min-width:24px; border-radius:4px; font-size:14px; cursor:pointer; height:24px; line-height:22px; text-align:center; }
 .btn-ai:hover { background:#f3e5f5; }
 .site-footer { text-align:center; padding:12px 0; font-size:12px; color:#999; border-top:1px solid #e0e0e0; margin-top:0; }
+
+/* ─── 设置页样式 ────────────────────────────────── */
+.settings-page { display:none; padding:20px; max-width:900px; margin:0 auto; }
+.settings-page.active { display:block; }
+.settings-page h2 { font-size:18px; margin:0 0 20px; color:#1a237e; border-bottom:2px solid #e8eaf6; padding-bottom:8px; }
+.settings-page h3 { font-size:15px; margin:24px 0 12px; color:#333; }
+.settings-section { background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:20px; margin-bottom:16px; }
+.settings-section label { display:block; font-size:13px; color:#555; font-weight:500; margin:10px 0 4px; }
+.settings-section input, .settings-section select { width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-size:14px; box-sizing:border-box; }
+.settings-section input:focus { border-color:#1a73e8; outline:none; box-shadow:0 0 0 2px rgba(26,115,232,.15); }
+.settings-section .hint { font-size:11px; color:#999; margin-top:2px; }
+.settings-section .btn-row { margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; }
+.settings-section .btn-row button { padding:8px 18px; border-radius:5px; font-size:13px; cursor:pointer; border:1px solid #ccc; background:#fff; }
+.settings-section .btn-row button.btn-primary { background:#1a73e8; color:#fff; border-color:#1a73e8; }
+.settings-section .btn-row button.btn-primary:hover { background:#1557b0; }
+.settings-section .btn-row button.btn-danger { background:#d32f2f; color:#fff; border-color:#d32f2f; }
+.settings-section .btn-row button.btn-danger:hover { background:#b71c1c; }
+.settings-section .btn-row button:disabled { opacity:.5; cursor:not-allowed; }
+
+/* 用户表格 */
+.user-table { width:100%; border-collapse:collapse; margin-top:10px; }
+.user-table th, .user-table td { padding:8px 10px; text-align:left; border-bottom:1px solid #eee; font-size:13px; }
+.user-table th { background:#f5f5f5; font-weight:600; color:#555; }
+.user-table .btn-sm { padding:3px 8px; border-radius:3px; font-size:11px; cursor:pointer; border:1px solid #ccc; background:#fff; }
+.user-table .btn-sm.btn-danger { color:#d32f2f; border-color:#ffcdd2; }
+.user-table .btn-sm.btn-danger:hover { background:#ffebee; }
+.user-table .btn-sm.btn-edit { color:#1565c0; border-color:#bbdefb; }
+.user-table .btn-sm.btn-edit:hover { background:#e3f2fd; }
+
+/* 模态框 */
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.4); z-index:1000; align-items:center; justify-content:center; }
+.modal-overlay.active { display:flex; }
+.modal-box { background:#fff; border-radius:10px; padding:24px; width:440px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,.15); }
+.modal-box h3 { margin:0 0 14px; font-size:16px; color:#1a237e; }
+.modal-box label { display:block; font-size:13px; color:#555; margin:10px 0 4px; font-weight:500; }
+.modal-box input, .modal-box select { width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-size:14px; box-sizing:border-box; }
+.modal-box .btn-row { margin-top:16px; display:flex; gap:8px; justify-content:flex-end; }
+
+/* Toast 增强 */
+.toast-success { background:#43a047 !important; }
+.toast-error { background:#e53935 !important; }
 </style>
 </head>
 <body>
@@ -139,6 +180,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   <h1>📊 JIMI-广告关键词AI管理系统</h1>
   <span class="subtitle">用数字科技实现精准投放</span>
   <div class="nav-links">
+    <a href="javascript:showPage('keywords')">关键词</a>
+    <a href="javascript:showPage('settings')">⚙️ 设置</a>
   </div>
   <span style="flex:1"></span>
   <span id="loginUserDisplay" style="font-size:12px;opacity:.8;display:none"></span>
@@ -257,6 +300,118 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
           <tbody id="tbody"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 设置页面 -->
+<!-- ================================================================ -->
+<div class="settings-page" id="settingsPage">
+  <h2>⚙️ 系统设置</h2>
+  
+  <!-- 领星API -->
+  <div class="settings-section">
+    <h3>🔗 领星 API</h3>
+    <label>App ID</label>
+    <input type="text" id="s_lingxing_app_id" placeholder="输入领星App ID">
+    <label>App Secret</label>
+    <input type="password" id="s_lingxing_app_secret" placeholder="输入领星App Secret">
+  </div>
+  
+  <!-- 卖家精灵 -->
+  <div class="settings-section">
+    <h3>🔍 卖家精灵</h3>
+    <label>Secret Key</label>
+    <input type="password" id="s_sellersprite_secret" placeholder="输入卖家精灵MCP Secret Key">
+  </div>
+  
+  <!-- 企业微信 -->
+  <div class="settings-section">
+    <h3>💬 企微 Webhook</h3>
+    <label>Webhook URL</label>
+    <input type="url" id="s_wecom_webhook_url" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+    <div class="hint">用于推送异常提醒和操作通知</div>
+    <div class="btn-row">
+      <button onclick="testWecom()">📤 测试推送</button>
+      <span id="wecomTestResult" style="font-size:12px;color:#999;align-self:center"></span>
+    </div>
+  </div>
+  
+  <!-- 大模型配置 -->
+  <div class="settings-section">
+    <h3>🤖 AI 分析引擎</h3>
+    <label>提供商</label>
+    <select id="s_ai_llm_provider">
+      <option value="">— 不启用外部AI（使用内置规则引擎）—</option>
+      <option value="openai">OpenAI</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="custom">自定义（兼容OpenAI接口）</option>
+    </select>
+    <label>API Key</label>
+    <input type="password" id="s_ai_llm_api_key" placeholder="sk-...">
+    <label>模型名称</label>
+    <input type="text" id="s_ai_llm_model" placeholder="gpt-4o / deepseek-chat">
+    <label>自定义 API 地址（可选）</label>
+    <input type="url" id="s_ai_llm_base_url" placeholder="https://api.openai.com/v1">
+    <div class="hint">使用自定义大模型时，填入兼容 OpenAI API 的地址（如 https://api.deepseek.com/v1）</div>
+  </div>
+  
+  <!-- 系统配置 -->
+  <div class="settings-section">
+    <h3>🔧 系统配置</h3>
+    <label>服务端口</label>
+    <input type="number" id="s_port" placeholder="18444" min="1024" max="65535">
+    <label>内存限制 (MB)</label>
+    <input type="number" id="s_memory_limit_mb" placeholder="500" min="128" max="4096">
+    <div class="hint">卖家精灵缓存上限，重启后生效</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+      <span id="saveSettingsResult" style="font-size:12px;color:#999;align-self:center"></span>
+    </div>
+  </div>
+  
+  <!-- 用户管理 -->
+  <div class="settings-section" id="userManageSection" style="display:none">
+    <h3>👥 用户管理</h3>
+    <p style="font-size:13px;color:#888">仅管理员可见。密码明文存储，请注意安全。</p>
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>用户名</th>
+          <th>昵称</th>
+          <th>角色</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody"></tbody>
+    </table>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="showAddUserModal()">➕ 添加用户</button>
+    </div>
+  </div>
+</div>
+
+<!-- 用户编辑/新增模态框 -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <h3 id="userModalTitle">添加用户</h3>
+    <label>用户名</label>
+    <input type="text" id="um_username" placeholder="英文或数字">
+    <label>密码</label>
+    <input type="password" id="um_password" placeholder="留空则不修改">
+    <label>昵称</label>
+    <input type="text" id="um_nick_name" placeholder="显示名称">
+    <label>角色</label>
+    <select id="um_role">
+      <option value="user">普通用户</option>
+      <option value="admin">管理员</option>
+    </select>
+    <div class="btn-row">
+      <button onclick="closeUserModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitUserForm()">保存</button>
     </div>
   </div>
 </div>
@@ -1591,6 +1746,195 @@ document.addEventListener('keydown', e => {
   }
   showLogin();
 })();
+
+// ================================================================
+// 设置页函数
+// ================================================================
+
+function showPage(page) {
+  const mainTable = document.getElementById('mainTable');
+  const settingsPage = document.getElementById('settingsPage');
+  if (page === 'settings') {
+    mainTable.style.display = 'none';
+    document.getElementById('batchBar').style.display = 'none';
+    settingsPage.classList.add('active');
+    loadSettings();
+  } else {
+    mainTable.style.display = '';
+    document.getElementById('batchBar').style.display = '';
+    settingsPage.classList.remove('active');
+  }
+}
+
+async function loadSettings() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return showLogin();
+  try {
+    const res = await fetch(BASE_PATH + '/api/settings', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (data.settings) {
+      Object.entries(data.settings).forEach(([key, val]) => {
+        const el = document.getElementById('s_' + key);
+        if (el) el.value = val;
+      });
+    }
+    loadUsers();
+  } catch(e) {
+    showToast('加载设置失败: ' + e.message, 'error');
+  }
+}
+
+async function saveSettings() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return showLogin();
+  const fields = ['lingxing_app_id','lingxing_app_secret','sellersprite_secret','wecom_webhook_url','ai_llm_provider','ai_llm_api_key','ai_llm_model','ai_llm_base_url','port','memory_limit_mb'];
+  const body = {};
+  fields.forEach(key => {
+    const el = document.getElementById('s_' + key);
+    if (el) body[key] = el.value.trim();
+  });
+  try {
+    const res = await fetch(BASE_PATH + '/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('saveSettingsResult').textContent = '✅ 已保存';
+      setTimeout(() => document.getElementById('saveSettingsResult').textContent = '', 3000);
+    } else {
+      showToast('保存失败: ' + (data.error || '未知错误'), 'error');
+    }
+  } catch(e) {
+    showToast('保存失败: ' + e.message, 'error');
+  }
+}
+
+async function testWecom() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return showLogin();
+  const el = document.getElementById('wecomTestResult');
+  el.textContent = '⏳ 发送中...';
+  try {
+    const res = await fetch(BASE_PATH + '/api/settings/test-wecom', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    el.textContent = data.success ? '✅ 推送成功' : '❌ ' + (data.error || '失败');
+    setTimeout(() => el.textContent = '', 5000);
+  } catch(e) {
+    el.textContent = '❌ ' + e.message;
+  }
+}
+
+// ─── 用户管理 ────────────────────────────────────────
+
+let currentEditUserId = null;
+
+async function loadUsers() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return;
+  try {
+    const res = await fetch(BASE_PATH + '/api/users', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.status === 403) return;
+    const data = await res.json();
+    const section = document.getElementById('userManageSection');
+    section.style.display = 'block';
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = (data.users || []).map(u =>
+      `<tr>
+        <td>${u.id}</td>
+        <td>${u.username}</td>
+        <td>${u.nick_name || ''}</td>
+        <td><span style="color:${u.role === 'admin' ? '#d32f2f' : '#1565c0'}">${u.role === 'admin' ? '管理员' : '普通用户'}</span></td>
+        <td>${u.is_active ? '&#9989; 启用' : '&#9940; 停用'}</td>
+        <td>
+          <button class="btn-sm btn-edit" onclick="editUser(${u.id}, '${u.username}', '${u.nick_name || ''}', '${u.role}')">&#9998;&#65039;</button>
+          ${u.role !== 'admin' ? '<button class="btn-sm btn-danger" onclick="deleteUser(' + u.id + ', \'' + u.username + '\')">&#128465;&#65039;</button>' : ''}
+        </td>
+      </tr>`
+    ).join('');
+  } catch(e) {}
+}
+
+function showAddUserModal() {
+  currentEditUserId = null;
+  document.getElementById('userModalTitle').textContent = '添加用户';
+  document.getElementById('um_username').value = '';
+  document.getElementById('um_username').disabled = false;
+  document.getElementById('um_password').value = '';
+  document.getElementById('um_password').placeholder = '输入密码';
+  document.getElementById('um_nick_name').value = '';
+  document.getElementById('um_role').value = 'user';
+  document.getElementById('userModal').classList.add('active');
+}
+
+function editUser(id, username, nickName, role) {
+  currentEditUserId = id;
+  document.getElementById('userModalTitle').textContent = '编辑用户: ' + username;
+  document.getElementById('um_username').value = username;
+  document.getElementById('um_username').disabled = true;
+  document.getElementById('um_password').value = '';
+  document.getElementById('um_password').placeholder = '留空不修改密码';
+  document.getElementById('um_nick_name').value = nickName;
+  document.getElementById('um_role').value = role;
+  document.getElementById('userModal').classList.add('active');
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').classList.remove('active');
+}
+
+async function submitUserForm() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return showLogin();
+  const username = document.getElementById('um_username').value.trim();
+  const password = document.getElementById('um_password').value.trim();
+  const nickName = document.getElementById('um_nick_name').value.trim();
+  const role = document.getElementById('um_role').value;
+  
+  if (currentEditUserId) {
+    const body = { nick_name: nickName, role };
+    if (password) body.password = password;
+    const res = await fetch(BASE_PATH + '/api/users/' + currentEditUserId + '/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.success) { closeUserModal(); loadUsers(); showToast('&#9989; 用户已更新', 'success'); }
+    else showToast('&#10060; ' + (data.error || '更新失败'), 'error');
+  } else {
+    if (!username || !password) { showToast('用户名和密码必填', 'error'); return; }
+    const res = await fetch(BASE_PATH + '/api/users/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ username, password, nick_name: nickName, role })
+    });
+    const data = await res.json();
+    if (data.success) { closeUserModal(); loadUsers(); showToast('&#9989; 用户已添加', 'success'); }
+    else showToast('&#10060; ' + (data.error || '添加失败'), 'error');
+  }
+}
+
+async function deleteUser(id, username) {
+  if (!confirm('确定删除用户「' + username + '」吗？')) return;
+  const token = localStorage.getItem('auth_token');
+  if (!token) return showLogin();
+  const res = await fetch(BASE_PATH + '/api/users/' + id + '/delete', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (data.success) { loadUsers(); showToast('&#9989; 用户已删除', 'success'); }
+  else showToast('&#10060; ' + (data.error || '删除失败'), 'error');
+}
 
 </script>
 
