@@ -1804,7 +1804,10 @@ async function saveSettings() {
   const body = {};
   fields.forEach(key => {
     const el = document.getElementById('s_' + key);
-    if (el) body[key] = el.value.trim();
+    const val = el ? el.value.trim() : '';
+    // 跳过掩码值（含****的字段不提交，防止覆盖真实值）
+    if (val && /\*{4}/.test(val)) return;
+    if (el) body[key] = val;
   });
   try {
     const res = await fetch(BASE_PATH + '/api/settings', {
