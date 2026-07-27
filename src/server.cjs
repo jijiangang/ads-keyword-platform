@@ -44,7 +44,7 @@ let PORT = 18444;
 let MEMORY_LIMIT_MB = 500;
 let LINGXING_APP_ID = '';
 let LINGXING_APP_SECRET = '';
-const SELLERSPRITE_URL = 'http://localhost:3000/mcp';
+const SELLERSPRITE_URL = process.env.SELLERSPRITE_URL || 'https://mcp.sellersprite.com/mcp';
 let SELLERSPRITE_SECRET = '';
 let WECOM_WEBHOOK_URL = '';
 let DINGTALK_WEBHOOK_URL = '';
@@ -240,7 +240,7 @@ async function callLingXingApi(path, method, bizParams = {}) {
 // 卖家精灵 MCP 调用
 // ============================================================
 async function callSellerspriteTool(toolName, args) {
-  const secret = getConfig('sellersprite_secret', '');
+  const secret = SELLERSPRITE_SECRET || getConfig('sellersprite_secret', '');
   const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: toolName, arguments: args } });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
