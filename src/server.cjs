@@ -1439,6 +1439,81 @@ async function handleAPI(req, res, parts) {
         const d30 = getReport(kw.keyword_id, index30);
         const d60 = getReport(kw.keyword_id, index60);
 
+        // 判断是否配置了 AI 大模型
+        const apiKey = getConfig('ai_llm_api_key', '');
+        if (apiKey) {
+          // 走AI大模型分析
+          const provider = getConfig('ai_llm_provider', 'deepseek');
+          const baseUrl = getConfig('ai_llm_base_url', 'https://api.deepseek.com');
+          const model = getConfig('ai_llm_model', 'deepseek-chat');
+
+          const ss = enrichedSs;
+          const ssSearchVol = ss.search_vol !== '—' && ss.search_vol != null ? ss.search_vol : 'N/A';
+          const ssPurchaseRate = ss.purchase_rate != null && ss.purchase_rate !== '—' ? (Number(ss.purchase_rate) * 100).toFixed(1) + '%' : 'N/A';
+          const ssGrowth = ss.growth != null ? ss.growth + '%' : 'N/A';
+          const ssProducts = ss.products !== '—' && ss.products != null ? ss.products : 'N/A';
+          const ssMarketCpc = ss.market_cpc !== '—' && ss.market_cpc != null ? '$' + ss.market_cpc : 'N/A';
+
+          const prompt = `你是一个专业的亚马逊PPC广告分析师。
+关键词: "${kw.keyword_text || ''}"
+
+市场数据:
+- 搜索量: ${ssSearchVol}
+- 购买率: ${ssPurchaseRate}
+- 年增长率: ${ssGrowth}
+- 竞争产品数: ${ssProducts}
+- 市场CPC: ${ssMarketCpc}
+
+近30天广告:
+- 展示: ${d30.impressions}
+- 点击: ${d30.clicks}
+- CTR: ${d30.ctr.toFixed(1)}%
+- CPC: $${d30.cpc.toFixed(2)}
+- 花费: $${d30.cost.toFixed(2)}
+- 销售额: $${d30.sales.toFixed(2)}
+- ACOS: ${d30.acos.toFixed(1)}%
+当前竞价: $${(kw.current_bid || 0).toFixed(2)}
+
+返回JSON格式（不要其他文字）:
+{"score":0-100,"score_label":"简短评级","summary":"一句话建议","details":["分析点1","分析点2","分析点3","分析点4","分析点5"],"suggestions":["建议1","建议2","建议3"]}`;
+
+          let aiResult = { score: 50, score_label: '中性', summary: 'AI分析失败', details: [], suggestions: [] };
+          try {
+            const aiRes = await fetch((baseUrl.replace(/\/+$/, '')) + '/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': '***' + apiKey
+              },
+              body: JSON.stringify({
+                model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 2048
+              })
+            });
+            if (aiRes.ok) {
+              const aiJson = await aiRes.json();
+              const content = aiJson?.choices?.[0]?.message?.content || '';
+              try {
+                const cleaned = content.replace(/^\s*\`\`\`(?:json)?\s*|\s*\`\`\`\s*$/g, '');
+                aiResult = JSON.parse(cleaned);
+              } catch(e) {}
+            }
+          } catch(e) {}
+
+          return {
+            keyword_id: kw.keyword_id,
+            keyword_text: kw.keyword_text,
+            score: aiResult.score !== undefined ? aiResult.score : 50,
+            score_label: aiResult.score_label || '中性',
+            summary: aiResult.summary || '',
+            suggestions: aiResult.suggestions || [],
+            details: aiResult.details || [],
+            analysis_30d: d30,
+            analysis_60d: d60,
+            current_bid: kw.current_bid || 0
+          };
+        }
+
+        // 无AI配置时走规则引擎
         const engineResult = analyzeKeyword(enrichedSs, d30, d60, {
           current_bid: kw.current_bid || 0,
           keyword_text: kw.keyword_text || '',
