@@ -1391,7 +1391,7 @@ ACOS: ${report90.acos.toFixed(1)}%
 
         return sendJSON(res, { success: true, data: result.data });
       } catch (e) {
-        return sendJSON(res, { success: false, error: e.message }, 500);
+        return sendJSON(res, { success: false, error: e.message });
       }
     }
 
