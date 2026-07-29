@@ -11,8 +11,8 @@ services:
     ports:
       - "18445:18445"
     volumes:
-      - ads-keyword-data:/app/data
-      - ads-keyword-cache:/app/cache
+      - ../data:/app/data
+      - ../cache:/app/cache
     environment:
       - PORT=18445
       - DB_PATH=/app/data/ads.db
@@ -25,12 +25,6 @@ services:
       start_period: 15s
     networks:
       - ads-keyword-net
-
-volumes:
-  ads-keyword-data:
-    name: ads-keyword-platform-data
-  ads-keyword-cache:
-    name: ads-keyword-platform-cache
 
 networks:
   ads-keyword-net:
